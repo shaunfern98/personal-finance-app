@@ -1136,6 +1136,88 @@ def delete_recurring_expense(expense_id: int) -> Response:
     return jsonify({"ok": True})
 
 
+@app.post("/api/import/json")
+def import_json() -> Response:
+    uid = g.uid
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "No JSON body"}), 400
+    db = get_db()
+    counts: dict[str, int] = {}
+
+    txs = data.get("transactions", [])
+    for t in txs:
+        try:
+            db.execute(
+                """INSERT OR IGNORE INTO transactions
+                   (amount, date, category, cost_type, purchase, note,
+                    payment_method, credit_card, tags, is_recurring, user_id)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+                (float(t["amount"]), t["date"], t.get("category"), t.get("cost_type"),
+                 t.get("purchase"), t.get("note"), t.get("payment_method","debit"),
+                 t.get("credit_card"), t.get("tags"), int(t.get("is_recurring", 0)), uid),
+            )
+        except Exception:
+            pass
+    counts["transactions"] = len(txs)
+
+    for s in data.get("income_streams", []):
+        try:
+            db.execute(
+                """INSERT INTO income_streams (label, amount, frequency, is_gross, user_id)
+                   VALUES (?,?,?,?,?)""",
+                (s.get("label",""), float(s.get("amount",0)),
+                 s.get("frequency","monthly"), int(s.get("is_gross",1)), uid),
+            )
+        except Exception:
+            pass
+    counts["income_streams"] = len(data.get("income_streams", []))
+
+    for cc in data.get("credit_cards", []):
+        try:
+            db.execute(
+                "INSERT OR IGNORE INTO credit_cards (name, last_four, limit, user_id) VALUES (?,?,?,?)",
+                (cc.get("name",""), cc.get("last_four",""), cc.get("limit"), uid),
+            )
+        except Exception:
+            pass
+    counts["credit_cards"] = len(data.get("credit_cards", []))
+
+    for d in data.get("debts", []):
+        try:
+            db.execute(
+                """INSERT INTO debts (name, balance, interest_rate, minimum_payment, user_id)
+                   VALUES (?,?,?,?,?)""",
+                (d.get("name",""), float(d.get("balance",0)),
+                 float(d.get("interest_rate",0)), float(d.get("minimum_payment",0)), uid),
+            )
+        except Exception:
+            pass
+    counts["debts"] = len(data.get("debts", []))
+
+    for g_obj in data.get("savings_goals", []):
+        try:
+            db.execute(
+                """INSERT INTO savings_goals (name, target_amount, current_amount, user_id)
+                   VALUES (?,?,?,?)""",
+                (g_obj.get("name",""), float(g_obj.get("target_amount",0)),
+                 float(g_obj.get("current_amount",0)), uid),
+            )
+        except Exception:
+            pass
+    counts["savings_goals"] = len(data.get("savings_goals", []))
+
+    for key, val in (data.get("settings") or {}).items():
+        try:
+            bare_key = key.split(":", 2)[-1] if key.startswith("u:") else key
+            _setting_set(db, bare_key, val, uid=uid)
+        except Exception:
+            pass
+
+    db.commit()
+    return jsonify({"ok": True, "imported": counts})
+
+
 @app.get("/api/export/json")
 def export_json() -> Response:
     uid = g.uid

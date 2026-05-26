@@ -2169,6 +2169,36 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  const btnImportJson = el("btn-import-json");
+  const fileImportJson = el("file-import-json");
+  if (btnImportJson && fileImportJson) {
+    btnImportJson.addEventListener("click", () => fileImportJson.click());
+    fileImportJson.addEventListener("change", async () => {
+      const file = fileImportJson.files[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const json = JSON.parse(text);
+        btnImportJson.disabled = true;
+        btnImportJson.textContent = "Importing…";
+        const result = await api("/api/import/json", {
+          method: "POST",
+          body: JSON.stringify(json),
+        });
+        const c = result.imported || {};
+        showFlash(`Imported: ${c.transactions||0} transactions, ${c.income_streams||0} income streams, ${c.credit_cards||0} cards, ${c.debts||0} debts, ${c.savings_goals||0} goals.`);
+        await reloadMonth();
+        await loadCategoryList();
+      } catch (e) {
+        showFlash("Import failed: " + e.message);
+      } finally {
+        btnImportJson.disabled = false;
+        btnImportJson.textContent = "Import Data (JSON)";
+        fileImportJson.value = "";
+      }
+    });
+  }
+
   const btnPrevDash = el("btn-prev-dash");
   if (btnPrevDash) {
     btnPrevDash.addEventListener("click", () => {
