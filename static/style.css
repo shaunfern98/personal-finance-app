@@ -1197,97 +1197,68 @@ dialog::backdrop {
   backdrop-filter: blur(8px);
 }
 
-/* ─── Mobile responsiveness ─── */
-@media (max-width: 768px) {
-  .layout {
-    padding: 0.75rem 0.6rem 3rem;
-  }
-
-  .top {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
-  }
-
-  .brand h1 {
-    font-size: 1.25rem;
-  }
-
-  .brand p {
-    display: none;
-  }
-
-  .user-bar {
-    margin-left: 0;
-  }
-
-  .tabs {
-    display: flex;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    border-radius: var(--radius-md);
-    padding: 0.25rem;
-    width: 100%;
-  }
-
-  .tabs::-webkit-scrollbar { display: none; }
-
-  .tab {
-    flex-shrink: 0;
-    padding: 0.45rem 0.85rem;
-    font-size: 0.82rem;
-  }
-
-  .grid-2,
-  .grid-budget {
-    grid-template-columns: 1fr !important;
-  }
-
-  .card--wide {
-    grid-column: 1 !important;
-  }
-
-  .table-wrap {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .card {
-    padding: 0.85rem 0.9rem;
-  }
-
-  .card-head--row {
-    flex-direction: column;
-  }
-
-  .budget-strip {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  dialog {
-    width: 95vw;
-    max-width: 95vw;
-    margin: auto;
-  }
-
-  .form-row.cols-2 {
-    grid-template-columns: 1fr !important;
-  }
-
-  .month-bar {
-    flex-wrap: wrap;
-  }
-
-  .mobile-hide {
-    display: none !important;
-  }
+/* ─── Bottom nav (mobile) ─── */
+.bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: var(--surface);
+  border-top: 1px solid var(--stroke);
+  padding: 0.4rem 0 calc(0.4rem + env(safe-area-inset-bottom));
+  justify-content: space-around;
+  align-items: center;
+  backdrop-filter: blur(16px);
 }
 
-/* Forced mobile view on desktop */
+.bottom-nav-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-family: var(--font);
+  font-size: 0.65rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.3rem 0.6rem;
+  border-radius: var(--radius-sm);
+  transition: color 0.15s;
+  min-width: 3.5rem;
+}
+
+.bottom-nav-btn span {
+  display: block;
+}
+
+.bottom-nav-btn.active {
+  color: var(--accent-soft);
+}
+
+/* ─── Mobile view (auto on small screens or toggled) ─── */
+@media (max-width: 700px) {
+  body { --is-mobile: 1; }
+}
+
+body.mobile-view .bottom-nav { display: flex; }
+
+body.mobile-view .tabs,
+body.mobile-view .brand p {
+  display: none;
+}
+
 body.mobile-view .layout {
-  max-width: 480px;
+  padding-bottom: 5rem;
+}
+
+body.mobile-view .top {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 body.mobile-view .grid-2,
@@ -1299,39 +1270,33 @@ body.mobile-view .card--wide {
   grid-column: 1 !important;
 }
 
-body.mobile-view .top {
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.75rem;
-}
-
-body.mobile-view .tabs {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  border-radius: var(--radius-md);
-  padding: 0.25rem;
-  width: 100%;
-}
-
-body.mobile-view .tabs::-webkit-scrollbar { display: none; }
-
-body.mobile-view .tab {
-  flex-shrink: 0;
-  font-size: 0.82rem;
-}
-
-body.mobile-view .brand p { display: none; }
-
 body.mobile-view .form-row.cols-2 {
   grid-template-columns: 1fr !important;
 }
 
-body.mobile-view .budget-strip {
-  flex-direction: column;
-  gap: 0.5rem;
+body.mobile-view .table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
+body.mobile-view dialog {
+  width: 95vw;
+  max-width: 95vw;
+  margin: auto;
+}
+
+@media (max-width: 700px) {
+  .layout { padding: 0.75rem 0.6rem 5rem; }
+  .top { flex-wrap: wrap; gap: 0.5rem; }
+  .brand p { display: none; }
+  .tabs { display: none; }
+  .bottom-nav { display: flex; }
+  .grid-2, .grid-budget { grid-template-columns: 1fr !important; }
+  .card--wide { grid-column: 1 !important; }
+  .form-row.cols-2 { grid-template-columns: 1fr !important; }
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  dialog { width: 95vw; max-width: 95vw; margin: auto; }
+}
 /* ─── end mobile ─── */
 
 @media (prefers-reduced-motion: reduce) {

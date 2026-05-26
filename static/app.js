@@ -2173,7 +2173,8 @@ document.addEventListener("DOMContentLoaded", () => {
   if (btnToggleMobile) {
     const applyMobileView = (on) => {
       document.body.classList.toggle("mobile-view", on);
-      btnToggleMobile.textContent = on ? "🖥️ Desktop view" : "📱 Mobile view";
+      btnToggleMobile.title = on ? "Switch to desktop view" : "Switch to mobile view";
+      btnToggleMobile.textContent = on ? "🖥️" : "📱";
       localStorage.setItem("mobile-view", on ? "1" : "0");
     };
     applyMobileView(localStorage.getItem("mobile-view") === "1");
@@ -2181,6 +2182,29 @@ document.addEventListener("DOMContentLoaded", () => {
       applyMobileView(!document.body.classList.contains("mobile-view"));
     });
   }
+
+  // Bottom nav — mirrors the top tab behaviour
+  document.querySelectorAll(".bottom-nav-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const tabName = btn.dataset.tab;
+      // activate the matching top tab to reuse existing tab logic
+      const topTab = document.querySelector(`.tab[data-tab="${tabName}"]`);
+      if (topTab) topTab.click();
+      // sync active state on bottom nav
+      document.querySelectorAll(".bottom-nav-btn").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+    });
+  });
+
+  // Keep bottom nav in sync when top tabs are clicked
+  document.querySelectorAll(".tab[data-tab]").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      const tabName = tab.dataset.tab;
+      document.querySelectorAll(".bottom-nav-btn").forEach((b) => {
+        b.classList.toggle("active", b.dataset.tab === tabName);
+      });
+    });
+  });
 
   const btnImportJson = el("btn-import-json");
   const fileImportJson = el("file-import-json");

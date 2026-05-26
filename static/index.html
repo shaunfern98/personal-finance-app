@@ -49,6 +49,7 @@
         </nav>
         <div class="user-bar">
           <span class="user-badge" id="user-badge"></span>
+          <button type="button" class="btn btn-ghost btn-sm" id="btn-toggle-mobile" title="Switch layout">📱</button>
           <button type="button" class="btn btn-ghost btn-sm" id="btn-logout">Sign out</button>
         </div>
       </header>
@@ -345,9 +346,6 @@
       </section>
 
       <section id="panel-budget" class="tab-panel" hidden>
-        <div style="display:flex; justify-content:flex-end; margin-bottom:0.75rem;">
-          <button type="button" class="btn btn-ghost btn-sm" id="btn-toggle-mobile" title="Switch layout">📱 Mobile view</button>
-        </div>
         <div class="grid grid-budget">
           <section class="card card--glow">
             <div class="card-head">
@@ -513,6 +511,14 @@
         </div>
       </section>
     </div>
+
+    <nav class="bottom-nav" id="bottom-nav" aria-label="Mobile navigation">
+      <button class="bottom-nav-btn active" data-tab="expenses">💸<span>Expenses</span></button>
+      <button class="bottom-nav-btn" data-tab="dashboard">📊<span>Dashboard</span></button>
+      <button class="bottom-nav-btn" data-tab="investing">📈<span>Investing</span></button>
+      <button class="bottom-nav-btn" data-tab="savings">🎯<span>Savings</span></button>
+      <button class="bottom-nav-btn" data-tab="budget">⚙️<span>Budget</span></button>
+    </nav>
 
     <dialog id="dlg-edit">
       <div class="dialog-head">
