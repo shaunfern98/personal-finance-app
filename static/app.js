@@ -2169,6 +2169,19 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  const btnToggleMobile = el("btn-toggle-mobile");
+  if (btnToggleMobile) {
+    const applyMobileView = (on) => {
+      document.body.classList.toggle("mobile-view", on);
+      btnToggleMobile.textContent = on ? "🖥️ Desktop view" : "📱 Mobile view";
+      localStorage.setItem("mobile-view", on ? "1" : "0");
+    };
+    applyMobileView(localStorage.getItem("mobile-view") === "1");
+    btnToggleMobile.addEventListener("click", () => {
+      applyMobileView(!document.body.classList.contains("mobile-view"));
+    });
+  }
+
   const btnImportJson = el("btn-import-json");
   const fileImportJson = el("file-import-json");
   if (btnImportJson && fileImportJson) {
