@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#0a0a0f" />
+    <title>Our Personal Finances ❤️</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/style.css" />
+    <link rel="manifest" href="/manifest.json" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" defer></script>
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <div class="bg-noise" aria-hidden="true"></div>
+    <div class="layout">
+      <div id="flash" class="flash" role="status"></div>
+
+      <header class="top">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true"></span>
+          <div>
+            <h1>Our Personal Finances <span class="brand-heart" aria-label="red heart">❤️</span></h1>
+            <p>Expenses, budgets, and charts — stored only on this device.</p>
+          </div>
+        </div>
+        <nav class="tabs" role="tablist" aria-label="Main">
+          <button type="button" class="tab active" role="tab" aria-selected="true" data-tab="expenses">
+            Expenses
+          </button>
+          <button type="button" class="tab" role="tab" aria-selected="false" data-tab="dashboard">
+            Dashboard
+          </button>
+          <button type="button" class="tab" role="tab" aria-selected="false" data-tab="investing">
+            Investing
+          </button>
+          <button type="button" class="tab" role="tab" aria-selected="false" data-tab="savings">
+            Savings Goals
+          </button>
+          <button type="button" class="tab" role="tab" aria-selected="false" data-tab="budget">
+            Budget &amp; salary
+          </button>
+        </nav>
+        <div class="user-bar">
+          <span class="user-badge" id="user-badge"></span>
+          <button type="button" class="btn btn-ghost btn-sm" id="btn-logout">Sign out</button>
+        </div>
+      </header>
+
+      <section id="panel-expenses" class="tab-panel">
+        <div class="month-bar card card--inline">
+          <button type="button" class="btn btn-ghost" id="btn-prev" aria-label="Previous month">←</button>
+          <input type="month" id="month-input" />
+          <button type="button" class="btn btn-ghost" id="btn-next" aria-label="Next month">→</button>
+          <button type="button" class="btn btn-accent" id="btn-today">This month</button>
+        </div>
+
+        <section class="summary" id="summary"></section>
+
+        <section class="card card--glow" id="panel-budget-status">
+          <div class="card-head">
+            <h2>Budget vs actual</h2>
+            <p class="muted">Compared to your saved monthly budgets. Rows turn red when you are over.</p>
+          </div>
+          <div class="budget-total-bar" id="budget-total-bar"></div>
+          <div class="table-wrap table-wrap--rounded">
+            <table class="table-budget">
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th>Budget</th>
+                  <th>Spent</th>
+                  <th>Left</th>
+                </tr>
+              </thead>
+              <tbody id="budget-status-body"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <div class="layout-toggles card card--inline" id="dash-toggles">
+          <span class="muted layout-toggles-label">Dashboard</span>
+          <label><input type="checkbox" data-widget="daily" /> By day</label>
+          <label><input type="checkbox" data-widget="category" /> By category</label>
+          <label><input type="checkbox" data-widget="list" /> Transactions</label>
+        </div>
+
+        <div class="grid grid-2">
+          <section class="card card--glow">
+            <div class="card-head">
+              <h2>Log purchase</h2>
+              <p class="muted">What you bought, category, optional notes, and fixed vs variable.</p>
+            </div>
+            <form id="form-add" class="form">
+              <div class="form-row cols-2">
+                <div>
+                  <label for="amount">Amount</label>
+                  <input id="amount" name="amount" type="number" min="0" step="0.01" required />
+                </div>
+                <div>
+                  <label for="date">Date</label>
+                  <input id="date" name="date" type="date" required />
+                </div>
+              </div>
+              <div>
+                <label for="category">Category</label>
+                <select id="category" name="category" required></select>
+              </div>
+              <div>
+                <label for="purchase">What you bought</label>
+                <input
+                  id="purchase"
+                  name="purchase"
+                  type="text"
+                  required
+                  maxlength="500"
+                  placeholder="e.g. Whole Foods run, Shell gas, date night dinner"
+                  autocomplete="off"
+                />
+              </div>
+              <div class="form-row cols-2">
+                <div>
+                  <label for="payment_method">Payment method</label>
+                  <select id="payment_method" name="payment_method" required>
+                    <option value="debit">Debit</option>
+                    <option value="credit">Credit Card</option>
+                    <option value="cash">Cash</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="credit_card_select">Credit card (optional)</label>
+                  <select id="credit_card_select" name="credit_card_select">
+                    <option value="">Select a card...</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-row cols-2">
+                <div>
+                  <label for="cost_type">Purchase type</label>
+                  <select id="cost_type" name="cost_type" required>
+                    <option value="variable">Variable</option>
+                    <option value="fixed">Fixed</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="tags">Tags (optional)</label>
+                  <input id="tags" name="tags" type="text" maxlength="500" placeholder="e.g. essential, impulse, work-related" />
+                </div>
+              </div>
+              <div>
+                <label>
+                  <input type="checkbox" id="is_recurring" name="is_recurring" />
+                  Recurring monthly expense
+                </label>
+              </div>
+              <div>
+                <label for="note">Notes (optional)</label>
+                <input id="note" name="note" type="text" maxlength="2000" placeholder="Anything extra to remember…" />
+              </div>
+              <button type="submit" class="btn btn-primary">Save transaction</button>
+            </form>
+          </section>
+
+          <section class="card card--glow" id="panel-daily">
+            <div class="card-head">
+              <h2>Spend by day</h2>
+              <p class="muted">Total spend for each day of the month.</p>
+            </div>
+            <div class="chart-box"><canvas id="chart-daily"></canvas></div>
+          </section>
+        </div>
+
+        <div class="grid" style="margin-top: 1rem">
+          <section class="card card--glow" id="panel-category">
+            <div class="card-head card-head--row">
+              <div>
+                <h2>Spend by category</h2>
+                <p class="muted">Totals for this month, or stacked by individual purchases.</p>
+              </div>
+              <label class="toggle-pill">
+                <input type="checkbox" id="toggle-category-stack" />
+                <span>Stack purchases</span>
+              </label>
+            </div>
+            <div class="chart-box"><canvas id="chart-category"></canvas></div>
+          </section>
+
+          <section class="card card--glow" id="panel-list">
+            <div class="card-head">
+              <h2>Transactions</h2>
+              <p class="muted">Edit or delete any row. Over-budget categories are highlighted.</p>
+            </div>
+            <div class="form-row" style="margin-bottom: 1rem;">
+              <input type="text" id="search-tx" placeholder="Search transactions..." style="flex: 1;" />
+              <select id="filter-category" style="max-width: 200px;">
+                <option value="">All Categories</option>
+              </select>
+              <select id="filter-payment" style="max-width: 150px;">
+                <option value="">All Methods</option>
+                <option value="debit">Debit</option>
+                <option value="credit">Credit</option>
+                <option value="cash">Cash</option>
+              </select>
+              <button type="button" class="btn btn-ghost" id="btn-sort-date">Date ↑</button>
+            </div>
+            <div class="muted" style="margin-bottom: 0.5rem; font-size: 0.85rem;" id="monthly-total-display">Monthly Total: —</div>
+            <div class="table-wrap table-wrap--rounded">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Category</th>
+                    <th>Purchase</th>
+                    <th>Payment</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Notes</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="tx-body"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section id="panel-dashboard" class="tab-panel" hidden>
+        <div class="month-bar card card--inline">
+          <button type="button" class="btn btn-ghost" id="btn-prev-dash" aria-label="Previous month">←</button>
+          <input type="month" id="month-input-dash" />
+          <button type="button" class="btn btn-ghost" id="btn-next-dash" aria-label="Next month">→</button>
+          <button type="button" class="btn btn-accent" id="btn-today-dash">This month</button>
+        </div>
+
+        <section class="card card--glow">
+          <div class="card-head">
+            <h2>Net Worth Snapshot</h2>
+            <p class="muted">Your financial health at a glance.</p>
+          </div>
+          <div class="budget-strip">
+            <div class="budget-strip-item">
+              <span class="budget-strip-label">Monthly Income</span>
+              <strong class="budget-strip-value mono" id="dash-income">—</strong>
+            </div>
+            <div class="budget-strip-item">
+              <span class="budget-strip-label">Monthly Expenses</span>
+              <strong class="budget-strip-value mono" id="dash-expenses">—</strong>
+            </div>
+            <div class="budget-strip-item budget-strip-item--highlight">
+              <span class="budget-strip-label">Net Savings</span>
+              <strong class="budget-strip-value mono" id="dash-savings">—</strong>
+            </div>
+          </div>
+        </section>
+
+        <div class="grid grid-budget">
+          <section class="card card--glow">
+            <div class="card-head">
+              <h2>Spending Trend</h2>
+              <p class="muted">Last 6 months spending</p>
+            </div>
+            <div class="chart-box"><canvas id="chart-spending-trend"></canvas></div>
+          </section>
+
+          <section class="card card--glow">
+            <div class="card-head">
+              <h2>Category Breakdown</h2>
+              <p class="muted">This month by category</p>
+            </div>
+            <div class="chart-box"><canvas id="chart-category-donut"></canvas></div>
+          </section>
+        </div>
+
+        <section class="card card--glow">
+          <div class="card-head">
+            <h2>Budget Health</h2>
+            <p class="muted">How you're tracking against your budget</p>
+          </div>
+          <div id="budget-health-bars"></div>
+        </section>
+
+        <section class="card card--glow">
+          <div class="card-head">
+            <h2>Top Categories</h2>
+            <p class="muted">Your biggest spending areas this month</p>
+          </div>
+          <div id="top-categories-list"></div>
+        </section>
+
+        <section class="card card--glow">
+          <div class="card-head">
+            <h2>Savings Rate</h2>
+            <p class="muted">Percentage of income saved</p>
+          </div>
+          <div class="budget-strip">
+            <div class="budget-strip-item budget-strip-item--highlight" style="flex: 1;">
+              <span class="budget-strip-label">Savings Rate</span>
+              <strong class="budget-strip-value mono" id="dash-savings-rate" style="font-size: 1.5rem;">—</strong>
+            </div>
+          </div>
+          <div style="margin-top: 1rem;">
+            <div style="background: var(--surface-solid); border-radius: var(--radius-sm); overflow: hidden;">
+              <div id="savings-rate-bar" style="height: 24px; background: linear-gradient(90deg, var(--accent), var(--cyan)); width: 0%; transition: width 0.5s;"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card card--glow">
+          <div class="card-head">
+            <h2>Spending Heatmap</h2>
+            <p class="muted">Color-coded by spending intensity. Click a day for details.</p>
+          </div>
+          <div class="month-bar card card--inline" style="margin-bottom: 1rem;">
+            <button type="button" class="btn btn-ghost" id="btn-prev-cal" aria-label="Previous month">←</button>
+            <input type="month" id="month-input-cal" />
+            <button type="button" class="btn btn-ghost" id="btn-next-cal" aria-label="Next month">→</button>
+            <button type="button" class="btn btn-accent" id="btn-today-cal">This month</button>
+          </div>
+          <div id="calendar-grid" style="display: grid; gap: 0.5rem;"></div>
+        </section>
+      </section>
+
+      <section id="panel-calendar" class="tab-panel" hidden>
+      </section>
+
+      <section id="panel-investing" class="tab-panel" hidden>
+        <section class="card card--glow" style="text-align: center; padding: 3rem;">
+          <h2 style="font-size: 2rem; margin-bottom: 1rem;">Coming soon...</h2>
+          <p class="muted">Investing features will be available after other improvements are completed.</p>
+        </section>
+      </section>
+
+      <section id="panel-savings" class="tab-panel" hidden>
+        <section class="card card--glow" style="text-align: center; padding: 3rem;">
+          <h2 style="font-size: 2rem; margin-bottom: 1rem;">Coming soon...</h2>
+          <p class="muted">Savings goals features will be available after other improvements are completed.</p>
+        </section>
+      </section>
+
+      <section id="panel-budget" class="tab-panel" hidden>
+        <div class="grid grid-budget">
+          <section class="card card--glow">
+            <div class="card-head">
+              <h2>Income Profile</h2>
+              <p class="muted">Add multiple income streams with different frequencies. All amounts auto-convert to monthly.</p>
+            </div>
+            <div class="form">
+              <div id="income-streams-container"></div>
+              <button type="button" class="btn btn-accent" id="btn-add-income-stream" style="margin-top: 0.5rem;">+ Add Income Stream</button>
+              
+              <div class="budget-strip" style="margin-top: 1.5rem;">
+                <div class="budget-strip-item">
+                  <span class="budget-strip-label">Monthly Income (Net)</span>
+                  <strong class="budget-strip-value mono" id="val-monthly-income">—</strong>
+                </div>
+                <div class="budget-strip-item">
+                  <span class="budget-strip-label">Projected Annual Net</span>
+                  <strong class="budget-strip-value mono" id="val-annual-income">—</strong>
+                </div>
+              </div>
+
+              <div class="budget-strip" style="margin-top: 1rem;">
+                <div class="budget-strip-item">
+                  <span class="budget-strip-label">RPP / Pension</span>
+                  <input id="rpp-deduction" type="number" min="0" step="0.01" placeholder="0" style="margin-top: 0.35rem; font-family: var(--mono);" />
+                </div>
+                <div class="budget-strip-item">
+                  <span class="budget-strip-label">RRSP Contribution</span>
+                  <input id="rrsp-contribution" type="number" min="0" step="0.01" placeholder="0" style="margin-top: 0.35rem; font-family: var(--mono);" />
+                </div>
+                <div class="budget-strip-item">
+                  <span class="budget-strip-label">FHSA Contribution</span>
+                  <input id="fhsa-contribution" type="number" min="0" step="0.01" placeholder="0" style="margin-top: 0.35rem; font-family: var(--mono);" />
+                </div>
+              </div>
+
+              <div class="budget-strip" style="margin-top: 1rem;">
+                <div class="budget-strip-item budget-strip-item--highlight">
+                  <span class="budget-strip-label">Take-Home Override</span>
+                  <span class="muted budget-strip-hint">Manual override for net pay after tax (optional)</span>
+                  <input id="take-home-override" type="number" min="0" step="0.01" placeholder="Leave empty to auto-calculate" style="margin-top: 0.35rem; font-family: var(--mono);" />
+                </div>
+              </div>
+
+              <div class="budget-strip" style="margin-top: 1rem;">
+                <div class="budget-strip-item budget-strip-item--highlight">
+                  <span class="budget-strip-label">Total Budgeted</span>
+                  <strong class="budget-strip-value mono" id="val-total-budget">—</strong>
+                </div>
+                <div class="budget-strip-item budget-strip-item--highlight">
+                  <span class="budget-strip-label">Available for Budget</span>
+                  <span class="muted budget-strip-hint">Net income minus RPP, RRSP, FHSA</span>
+                  <strong class="budget-strip-value mono" id="val-investing">—</strong>
+                </div>
+              </div>
+            </div>
+          </section>
+          <section class="card card--glow">
+            <div class="card-head">
+              <h2>Credit Cards</h2>
+              <p class="muted">Manage your credit cards for expense tracking.</p>
+            </div>
+            <div id="credit-cards-container"></div>
+            <button type="button" class="btn btn-accent" id="btn-add-card" style="margin-top: 0.5rem;">+ Add Credit Card</button>
+          </section>
+          <section class="card card--glow">
+            <div class="card-head">
+              <h2>Debt Tracker</h2>
+              <p class="muted">Track your debts with payoff estimates.</p>
+            </div>
+            <div id="debts-container"></div>
+            <button type="button" class="btn btn-accent" id="btn-add-debt" style="margin-top: 0.5rem;">+ Add Debt</button>
+          </section>
+          <section class="card card--glow">
+            <div class="card-head">
+              <h2>Savings Goals</h2>
+              <p class="muted">Track your savings goals with progress bars.</p>
+            </div>
+            <div id="goals-container"></div>
+            <button type="button" class="btn btn-accent" id="btn-add-goal" style="margin-top: 0.5rem;">+ Add Goal</button>
+          </section>
+          <section class="card card--glow">
+            <div class="card-head">
+              <h2>Data Export</h2>
+              <p class="muted">Export your data for backup or analysis.</p>
+            </div>
+            <div style="display: grid; gap: 0.5rem;">
+              <button type="button" class="btn btn-primary" id="btn-export-json" style="width: 100%;">Export All Data (JSON)</button>
+              <button type="button" class="btn btn-primary" id="btn-export-csv" style="width: 100%;">Export Transactions (CSV)</button>
+            </div>
+          </section>
+          <section class="card card--glow">
+            <div class="card-head">
+              <h2>UI Theme</h2>
+              <p class="muted">Customize the app's color scheme.</p>
+            </div>
+            <div>
+              <label for="theme-selector" style="display: block; margin-bottom: 0.5rem;">Select theme:</label>
+              <select id="theme-selector" style="width: 100%; padding: 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--stroke); background: var(--surface-solid); color: var(--text);">
+                <option value="default">Default (Violet/Cyan)</option>
+                <option value="pink">Pink Theme</option>
+                <option value="black">Black Theme</option>
+                <option value="dark">Dark Theme</option>
+                <option value="green">Green Theme</option>
+              </select>
+            </div>
+          </section>
+          <section class="card card--glow">
+            <div class="card-head">
+              <h2>Recurring Expenses</h2>
+              <p class="muted">Set up periodic expenses that will be automatically logged in your date range.</p>
+            </div>
+            <div id="recurring-expenses-container"></div>
+            <button type="button" class="btn btn-accent" id="btn-add-recurring" style="margin-top: 0.5rem;">+ Add Recurring Expense</button>
+          </section>
+          <section class="card card--glow card--wide">
+            <div class="card-head card-head--row">
+              <div>
+                <h2>Category budgets</h2>
+                <p class="muted">Set how much you plan to spend in each category. Percent updates as you type.</p>
+              </div>
+              <label class="toggle-pill">
+                <input type="checkbox" id="toggle-503020" />
+                <span>50/30/20 Rule</span>
+              </label>
+            </div>
+            <div id="rule-503020-banner" class="budget-strip" style="display: none; margin-bottom: 1rem;">
+              <div class="budget-strip-item">
+                <span class="budget-strip-label">50% Needs (Fixed)</span>
+                <strong class="budget-strip-value mono" id="rule-50">—</strong>
+              </div>
+              <div class="budget-strip-item">
+                <span class="budget-strip-label">30% Wants (Variable)</span>
+                <strong class="budget-strip-value mono" id="rule-30">—</strong>
+              </div>
+              <div class="budget-strip-item">
+                <span class="budget-strip-label">20% Savings</span>
+                <strong class="budget-strip-value mono" id="rule-20">—</strong>
+              </div>
+            </div>
+            <div class="table-wrap table-wrap--rounded">
+              <table class="table-budget-editor">
+                <thead>
+                  <tr>
+                    <th>Category</th>
+                    <th>Type</th>
+                    <th>Budget / month</th>
+                    <th>% of salary</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="budget-editor-body"></tbody>
+              </table>
+            </div>
+            <div class="budget-actions">
+              <button type="button" class="btn btn-accent" id="btn-add-category" style="margin-bottom: 0.5rem;">+ Add Custom Category</button>
+              <button type="button" class="btn btn-primary" id="btn-save-budget">Save budget</button>
+              <span class="muted" id="budget-save-hint"></span>
+            </div>
+          </section>
+        </div>
+      </section>
+    </div>
+
+    <dialog id="dlg-edit">
+      <div class="dialog-head">
+        <h3>Edit transaction</h3>
+        <button type="button" class="btn btn-ghost" id="dlg-close">Close</button>
+      </div>
+      <form id="form-edit" class="dialog-body form">
+        <input type="hidden" id="edit-id" />
+        <div class="form-row cols-2">
+          <div>
+            <label for="edit-amount">Amount</label>
+            <input id="edit-amount" type="number" min="0" step="0.01" required />
+          </div>
+          <div>
+            <label for="edit-date">Date</label>
+            <input id="edit-date" type="date" required />
+          </div>
+        </div>
+        <div>
+          <label for="edit-category">Category</label>
+          <select id="edit-category" required></select>
+        </div>
+        <div>
+          <label for="edit-purchase">What you bought</label>
+          <input id="edit-purchase" type="text" required maxlength="500" />
+        </div>
+        <div class="form-row cols-2">
+          <div>
+            <label for="edit-payment_method">Payment method</label>
+            <select id="edit-payment_method" required>
+              <option value="debit">Debit</option>
+              <option value="credit">Credit Card</option>
+              <option value="cash">Cash</option>
+            </select>
+          </div>
+          <div>
+            <label for="edit-credit_card_select">Credit card (optional)</label>
+            <select id="edit-credit_card_select">
+              <option value="">Select a card...</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row cols-2">
+          <div>
+            <label for="edit-cost_type">Purchase type</label>
+            <select id="edit-cost_type" required>
+              <option value="variable">Variable</option>
+              <option value="fixed">Fixed</option>
+            </select>
+          </div>
+          <div>
+            <label for="edit-tags">Tags (optional)</label>
+            <input id="edit-tags" type="text" maxlength="500" />
+          </div>
+        </div>
+        <div>
+          <label>
+            <input type="checkbox" id="edit-is_recurring" />
+            Recurring monthly expense
+          </label>
+        </div>
+        <div>
+          <label for="edit-note">Notes</label>
+          <input id="edit-note" type="text" maxlength="2000" />
+        </div>
+        <button type="submit" class="btn btn-primary">Save changes</button>
+      </form>
+    </dialog>
+    
+    <dialog id="dlg-day-details" class="dialog">
+      <div class="dialog-head">
+        <h3 id="day-details-title">Day Details</h3>
+        <button type="button" class="btn btn-ghost" id="dlg-close-day">✕</button>
+      </div>
+      <div class="dialog-body">
+        <div id="day-details-content"></div>
+      </div>
+    </dialog>
+
+    <dialog id="dlg-recurring">
+      <div class="dialog-head">
+        <h3>Add Recurring Expense</h3>
+        <button type="button" class="btn btn-ghost" id="dlg-close-recurring">Close</button>
+      </div>
+      <form id="form-recurring" class="dialog-body form">
+        <div>
+          <label for="rec-name">Expense name</label>
+          <input id="rec-name" type="text" placeholder="e.g., Phone bill" required />
+        </div>
+        <div>
+          <label for="rec-amount">Amount</label>
+          <input id="rec-amount" type="number" min="0" step="0.01" placeholder="0.00" required />
+        </div>
+        <div>
+          <label for="rec-category">Category</label>
+          <select id="rec-category" required></select>
+        </div>
+        <div>
+          <label for="rec-cost-type">Cost type</label>
+          <select id="rec-cost-type">
+            <option value="variable">Variable</option>
+            <option value="fixed">Fixed</option>
+          </select>
+        </div>
+        <div class="form-row cols-2">
+          <div>
+            <label for="rec-start-date">Start date</label>
+            <input id="rec-start-date" type="date" required />
+          </div>
+          <div>
+            <label for="rec-end-date">End date</label>
+            <input id="rec-end-date" type="date" required />
+          </div>
+        </div>
+        <div>
+          <label for="rec-frequency">Frequency</label>
+          <select id="rec-frequency">
+            <option value="monthly">Monthly</option>
+            <option value="quarterly">Quarterly</option>
+            <option value="annually">Annually</option>
+          </select>
+        </div>
+        <div>
+          <label for="rec-day-of-month">Day of month</label>
+          <input id="rec-day-of-month" type="number" min="1" max="31" placeholder="1-31" required />
+        </div>
+        <button type="submit" class="btn btn-primary">Add Recurring Expense</button>
+      </form>
+    </dialog>
+
+    <dialog id="dlg-category">
+      <div class="dialog-head">
+        <h3>Add Custom Category</h3>
+        <button type="button" class="btn btn-ghost" id="dlg-close-category">Close</button>
+      </div>
+      <form id="form-category" class="dialog-body form">
+        <div>
+          <label for="category-name">Category name</label>
+          <input id="category-name" type="text" placeholder="e.g., Entertainment" required />
+        </div>
+        <button type="submit" class="btn btn-primary">Add Category</button>
+      </form>
+    </dialog>
+
+    <div id="flash"></div>
+  </body>
+</html>

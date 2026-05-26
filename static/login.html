@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ledger — Sign In</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0f0f13;
+      font-family: 'Inter', system-ui, sans-serif;
+      color: #e5e7eb;
+    }
+    .card {
+      background: #1a1a23;
+      border: 1px solid #2d2d3a;
+      border-radius: 16px;
+      padding: 2.5rem 2rem;
+      width: 100%;
+      max-width: 380px;
+      box-shadow: 0 24px 64px rgba(0,0,0,.5);
+    }
+    .logo {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .logo h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #7c3aed, #06b6d4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.5px;
+    }
+    .logo p { color: #6b7280; font-size: 0.875rem; margin-top: 4px; }
+    .tabs {
+      display: flex;
+      background: #111118;
+      border-radius: 8px;
+      padding: 4px;
+      margin-bottom: 1.75rem;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 0.5rem;
+      border: none;
+      background: transparent;
+      color: #6b7280;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all .2s;
+    }
+    .tab-btn.active {
+      background: #2d2d3a;
+      color: #e5e7eb;
+    }
+    .form-group { margin-bottom: 1rem; }
+    label { display: block; font-size: 0.8125rem; color: #9ca3af; margin-bottom: 6px; }
+    input {
+      width: 100%;
+      background: #111118;
+      border: 1px solid #2d2d3a;
+      border-radius: 8px;
+      padding: 0.625rem 0.875rem;
+      color: #e5e7eb;
+      font-size: 0.9375rem;
+      outline: none;
+      transition: border-color .2s;
+    }
+    input:focus { border-color: #7c3aed; }
+    .btn-submit {
+      width: 100%;
+      padding: 0.75rem;
+      background: linear-gradient(135deg, #7c3aed, #5b21b6);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 0.5rem;
+      transition: opacity .2s;
+    }
+    .btn-submit:hover { opacity: .9; }
+    .btn-submit:disabled { opacity: .5; cursor: not-allowed; }
+    .error-msg {
+      background: rgba(239,68,68,.12);
+      border: 1px solid rgba(239,68,68,.3);
+      color: #f87171;
+      border-radius: 8px;
+      padding: 0.625rem 0.875rem;
+      font-size: 0.8125rem;
+      margin-bottom: 1rem;
+      display: none;
+    }
+    .info-msg {
+      background: rgba(6,182,212,.1);
+      border: 1px solid rgba(6,182,212,.25);
+      color: #67e8f9;
+      border-radius: 8px;
+      padding: 0.625rem 0.875rem;
+      font-size: 0.8125rem;
+      margin-bottom: 1rem;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">
+      <h1>Ledger</h1>
+      <p>Personal Finance Dashboard</p>
+    </div>
+    <div class="tabs">
+      <button class="tab-btn active" id="tab-login" onclick="switchTab('login')">Sign In</button>
+      <button class="tab-btn" id="tab-register" onclick="switchTab('register')">Register</button>
+    </div>
+    <div id="error-box" class="error-msg"></div>
+    <div id="info-box" class="info-msg"></div>
+
+    <form id="login-form" onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="login-username" autocomplete="username" required />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-password" autocomplete="current-password" required />
+      </div>
+      <button class="btn-submit" type="submit" id="login-btn">Sign In</button>
+    </form>
+
+    <form id="register-form" style="display:none" onsubmit="handleRegister(event)">
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="reg-username" autocomplete="username" required />
+      </div>
+      <div class="form-group">
+        <label>Password <span style="color:#6b7280;font-size:.75rem">(min 6 chars)</span></label>
+        <input type="password" id="reg-password" autocomplete="new-password" required minlength="6" />
+      </div>
+      <div class="form-group">
+        <label>Confirm Password</label>
+        <input type="password" id="reg-confirm" autocomplete="new-password" required />
+      </div>
+      <button class="btn-submit" type="submit" id="reg-btn">Create Account</button>
+    </form>
+  </div>
+
+  <script>
+    function switchTab(tab) {
+      document.getElementById('login-form').style.display = tab === 'login' ? '' : 'none';
+      document.getElementById('register-form').style.display = tab === 'register' ? '' : 'none';
+      document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+      document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+      clearMessages();
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('error-box');
+      el.textContent = msg;
+      el.style.display = 'block';
+      document.getElementById('info-box').style.display = 'none';
+    }
+
+    function showInfo(msg) {
+      const el = document.getElementById('info-box');
+      el.textContent = msg;
+      el.style.display = 'block';
+      document.getElementById('error-box').style.display = 'none';
+    }
+
+    function clearMessages() {
+      document.getElementById('error-box').style.display = 'none';
+      document.getElementById('info-box').style.display = 'none';
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      clearMessages();
+      const btn = document.getElementById('login-btn');
+      btn.disabled = true;
+      btn.textContent = 'Signing in…';
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: document.getElementById('login-username').value.trim(),
+            password: document.getElementById('login-password').value,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) { showError(data.error || 'Login failed'); return; }
+        window.location.href = '/';
+      } catch (err) {
+        showError('Network error — please try again.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Sign In';
+      }
+    }
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      clearMessages();
+      const pw = document.getElementById('reg-password').value;
+      const confirm = document.getElementById('reg-confirm').value;
+      if (pw !== confirm) { showError('Passwords do not match.'); return; }
+      const btn = document.getElementById('reg-btn');
+      btn.disabled = true;
+      btn.textContent = 'Creating…';
+      try {
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: document.getElementById('reg-username').value.trim(),
+            password: pw,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) { showError(data.error || 'Registration failed'); return; }
+        window.location.href = '/';
+      } catch (err) {
+        showError('Network error — please try again.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Create Account';
+      }
+    }
+  </script>
+</body>
+</html>
