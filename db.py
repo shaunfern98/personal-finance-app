@@ -10,7 +10,12 @@ DEFAULT_DB_PATH = DATA_DIR / "finance.db"
 
 
 def db_path() -> Path:
-    return Path(os.environ.get("FINANCE_DB", str(DEFAULT_DB_PATH)))
+    target = Path(os.environ.get("FINANCE_DB", str(DEFAULT_DB_PATH)))
+    if not target.exists() and DEFAULT_DB_PATH.exists() and target != DEFAULT_DB_PATH:
+        import shutil
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(DEFAULT_DB_PATH, target)
+    return target
 
 
 def connect() -> sqlite3.Connection:
