@@ -561,7 +561,9 @@ def categories() -> Response:
     predefined = list(EXPENSE_CATEGORIES)
     custom_rows = db.execute("SELECT category FROM custom_categories WHERE user_id = ? ORDER BY category ASC", (uid,)).fetchall()
     custom = [r["category"] for r in custom_rows]
-    all_categories = list(dict.fromkeys(predefined + custom))
+    hidden_rows = db.execute("SELECT category FROM hidden_categories WHERE user_id = ?", (uid,)).fetchall()
+    hidden = {r["category"] for r in hidden_rows}
+    all_categories = [c for c in list(dict.fromkeys(predefined + custom)) if c not in hidden]
     return jsonify({"items": all_categories, "custom": custom})
 
 
@@ -569,12 +571,18 @@ def categories() -> Response:
 def delete_custom_category(name: str) -> Response:
     uid = g.uid
     db = get_db()
+    if name in CATEGORY_SET:
+        db.execute(
+            "INSERT OR IGNORE INTO hidden_categories (category, user_id) VALUES (?, ?)", (name, uid)
+        )
+        db.commit()
+        return jsonify({"ok": True})
     cur = db.execute(
         "DELETE FROM custom_categories WHERE category = ? AND user_id = ?", (name, uid)
     )
     db.commit()
     if cur.rowcount == 0:
-        return jsonify({"error": "custom category not found"}), 404
+        return jsonify({"error": "category not found"}), 404
     return jsonify({"ok": True})
 
 
@@ -594,7 +602,8 @@ def add_custom_category() -> Response:
         return jsonify({"error": "category already exists"}), 400
     
     uid = g.uid
-    db.execute("INSERT INTO custom_categories (category, user_id) VALUES (?, ?)", (name, uid))
+    db.execute("DELETE FROM hidden_categories WHERE category = ? AND user_id = ?", (name, uid))
+    db.execute("INSERT OR IGNORE INTO custom_categories (category, user_id) VALUES (?, ?)", (name, uid))
     db.commit()
     return jsonify({"name": name}), 201
 
@@ -669,12 +678,32 @@ def update_category_metadata(category: str) -> Response:
     })
 
 
+@app.get("/api/credit-cards/cashback-map")
+def get_cashback_map() -> Response:
+    uid = g.uid
+    db = get_db()
+    cards = db.execute(
+        "SELECT id, nickname, default_cashback_rate FROM credit_cards WHERE user_id = ? ORDER BY id ASC", (uid,)
+    ).fetchall()
+    result: dict = {}
+    for card in cards:
+        rates = db.execute(
+            "SELECT category, rate FROM credit_card_cashback WHERE card_id = ? AND user_id = ?",
+            (card["id"], uid),
+        ).fetchall()
+        card_rates: dict = {"__default__": float(card["default_cashback_rate"] or 1)}
+        for r in rates:
+            card_rates[r["category"]] = float(r["rate"])
+        result[card["nickname"]] = card_rates
+    return jsonify({"map": result})
+
+
 @app.get("/api/credit-cards")
 def get_credit_cards() -> Response:
     uid = g.uid
     db = get_db()
     rows = db.execute(
-        "SELECT id, nickname, card_type, last_four FROM credit_cards WHERE user_id = ? ORDER BY id ASC", (uid,)
+        "SELECT id, nickname, card_type, last_four, default_cashback_rate FROM credit_cards WHERE user_id = ? ORDER BY id ASC", (uid,)
     ).fetchall()
     cards = [
         {
@@ -682,7 +711,7 @@ def get_credit_cards() -> Response:
             "nickname": r["nickname"],
             "card_type": r["card_type"],
             "last_four": r["last_four"],
-            "cashback_percent": 0.0,
+            "default_cashback_rate": float(r["default_cashback_rate"] or 1),
         }
         for r in rows
     ]
@@ -709,17 +738,17 @@ def create_credit_card() -> Response:
     )
     db.commit()
     rid = cur.lastrowid
-    r = db.execute(
-        "SELECT id, nickname, card_type, last_four FROM credit_cards WHERE id = ?",
+    r2 = db.execute(
+        "SELECT id, nickname, card_type, last_four, default_cashback_rate FROM credit_cards WHERE id = ?",
         (rid,),
     ).fetchone()
     return jsonify(
         {
-            "id": r["id"],
-            "nickname": r["nickname"],
-            "card_type": r["card_type"],
-            "last_four": r["last_four"],
-            "cashback_percent": 0.0,
+            "id": r2["id"],
+            "nickname": r2["nickname"],
+            "card_type": r2["card_type"],
+            "last_four": r2["last_four"],
+            "default_cashback_rate": float(r2["default_cashback_rate"] or 1),
         }
     ), 201
 
@@ -748,7 +777,7 @@ def update_credit_card(card_id: int) -> Response:
     )
     db.commit()
     r = db.execute(
-        "SELECT id, nickname, card_type, last_four FROM credit_cards WHERE id = ?",
+        "SELECT id, nickname, card_type, last_four, default_cashback_rate FROM credit_cards WHERE id = ?",
         (card_id,),
     ).fetchone()
     return jsonify(
@@ -757,9 +786,53 @@ def update_credit_card(card_id: int) -> Response:
             "nickname": r["nickname"],
             "card_type": r["card_type"],
             "last_four": r["last_four"],
-            "cashback_percent": 0.0,
+            "default_cashback_rate": float(r["default_cashback_rate"] or 1),
         }
     )
+
+
+@app.get("/api/credit-cards/<int:card_id>/cashback")
+def get_card_cashback(card_id: int) -> Response:
+    uid = g.uid
+    db = get_db()
+    card = db.execute(
+        "SELECT id, default_cashback_rate FROM credit_cards WHERE id = ? AND user_id = ?", (card_id, uid)
+    ).fetchone()
+    if not card:
+        return jsonify({"error": "not found"}), 404
+    rates = db.execute(
+        "SELECT category, rate FROM credit_card_cashback WHERE card_id = ? AND user_id = ? ORDER BY category ASC",
+        (card_id, uid),
+    ).fetchall()
+    return jsonify({
+        "default_rate": float(card["default_cashback_rate"] or 1),
+        "rates": [{"category": r["category"], "rate": float(r["rate"])} for r in rates],
+    })
+
+
+@app.put("/api/credit-cards/<int:card_id>/cashback")
+def update_card_cashback(card_id: int) -> Response:
+    uid = g.uid
+    data = request.get_json(silent=True) or {}
+    db = get_db()
+    if not db.execute("SELECT 1 FROM credit_cards WHERE id = ? AND user_id = ?", (card_id, uid)).fetchone():
+        return jsonify({"error": "not found"}), 404
+    if "default_rate" in data:
+        db.execute(
+            "UPDATE credit_cards SET default_cashback_rate = ? WHERE id = ? AND user_id = ?",
+            (max(0.0, float(data["default_rate"])), card_id, uid),
+        )
+    if "rates" in data:
+        db.execute("DELETE FROM credit_card_cashback WHERE card_id = ? AND user_id = ?", (card_id, uid))
+        for r in data["rates"]:
+            cat = (r.get("category") or "").strip()
+            if cat:
+                db.execute(
+                    "INSERT INTO credit_card_cashback (card_id, category, rate, user_id) VALUES (?, ?, ?, ?)",
+                    (card_id, cat, max(0.0, float(r.get("rate", 0))), uid),
+                )
+    db.commit()
+    return jsonify({"ok": True})
 
 
 @app.delete("/api/credit-cards/<int:card_id>")

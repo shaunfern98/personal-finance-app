@@ -44,6 +44,7 @@ let incomeSettings = {
 };
 let categoryMetadata = {};
 let customCategorySet = new Set();
+let cashbackMap = {};
 let show503020Rule = false;
 let allTransactions = [];
 let lastBudgetStatus = { overBudget: new Set() };
@@ -246,7 +247,7 @@ function renderTable(txs, budgetStatus) {
   
   if (!filteredTxs.length) {
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td colspan="8" class="muted">No transactions this month yet.</td>`;
+    tr.innerHTML = `<td colspan="9" class="muted">No transactions this month yet.</td>`;
     tbody.appendChild(tr);
     return;
   }
@@ -265,6 +266,16 @@ function renderTable(txs, budgetStatus) {
     const recurringBadge = t.is_recurring ? `<span class="tag tag-subscription" style="font-size: 0.7rem; margin-left: 0.3rem;">Recurring</span>` : "";
     const purchaseDisplay = escapeHtml(t.purchase || (t.is_recurring ? "Recurring expense" : ""));
     const noteDisplay = escapeHtml(t.note || (t.is_recurring ? "Auto-logged from recurring expenses" : ""));
+
+    let cashbackDisplay = "<span class='muted'>—</span>";
+    if (t.payment_method === "credit" && t.credit_card && cashbackMap[t.credit_card]) {
+      const cardRates = cashbackMap[t.credit_card];
+      const rate = cardRates[t.category] ?? cardRates["__default__"] ?? 0;
+      if (rate > 0) {
+        const earned = t.amount * rate / 100;
+        cashbackDisplay = `<span style="color:var(--success);font-family:var(--mono);font-weight:600;">${money.format(earned)}</span><span class="muted" style="font-size:0.75rem;"> (${rate}%)</span>`;
+      }
+    }
     
     tr.innerHTML = `
       <td>${t.date}</td>
@@ -275,6 +286,7 @@ function renderTable(txs, budgetStatus) {
       t.cost_type === "fixed" ? "Fixed" : "Variable"
     }</span></td>
       <td style="font-family: var(--mono); font-weight: 600;">${money.format(t.amount)}</td>
+      <td>${cashbackDisplay}</td>
       <td class="notes">${noteDisplay}</td>
       <td class="row-actions">
         <button type="button" class="btn" data-edit="${t.id}">Edit</button>
@@ -550,10 +562,18 @@ function setCalendarMonthInput() {
   el("month-input-cal").value = calendarMonth;
 }
 
+async function loadCashbackMap() {
+  try {
+    const data = await api("/api/credit-cards/cashback-map");
+    cashbackMap = data.map || {};
+  } catch (e) {}
+}
+
 async function loadCreditCards() {
   try {
     const data = await api("/api/credit-cards");
     creditCards = data.cards || [];
+    await loadCashbackMap();
     populateCreditCardDropdowns();
     renderCreditCards();
   } catch (e) {
@@ -579,27 +599,101 @@ function renderCreditCards() {
   const container = el("credit-cards-container");
   if (!container) return;
   container.innerHTML = "";
-  
+
   if (creditCards.length === 0) {
     container.innerHTML = '<p class="muted">No credit cards added yet.</p>';
     return;
   }
-  
+
   creditCards.forEach(card => {
+    const cardRates = cashbackMap[card.nickname] || {};
+    const defaultRate = cardRates["__default__"] ?? card.default_cashback_rate ?? 1;
+    const categoryRates = Object.entries(cardRates).filter(([k]) => k !== "__default__");
+
     const div = document.createElement("div");
-    div.style.cssText = "display: grid; gap: 0.5rem; padding: 0.75rem; border: 1px solid var(--stroke); border-radius: var(--radius-sm); background: var(--surface-solid); margin-bottom: 0.5rem;";
+    div.style.cssText = "display:grid;gap:0.75rem;padding:0.85rem;border:1px solid var(--stroke);border-radius:var(--radius-md);background:var(--surface-solid);margin-bottom:0.75rem;";
+
+    const rateRows = categoryRates.map(([cat, rate]) =>
+      `<div class="cashback-rate-row" data-cat="${escapeHtml(cat)}" style="display:flex;align-items:center;gap:0.5rem;">
+        <span style="flex:1;font-size:0.85rem;">${escapeHtml(cat)}</span>
+        <input type="number" class="cashback-cat-rate" min="0" max="100" step="0.1" value="${rate}" style="width:5rem;" /><span class="muted" style="font-size:0.8rem;">%</span>
+        <button type="button" class="btn btn-ghost btn-sm btn-del-rate" style="color:var(--danger);">✕</button>
+      </div>`
+    ).join("");
+
     div.innerHTML = `
-      <div style="display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; align-items: start;">
+      <div style="display:grid;grid-template-columns:1fr auto;gap:0.5rem;align-items:start;">
         <div>
-          <strong style="font-size: 1rem;">${escapeHtml(card.nickname)}</strong>
-          <div class="muted" style="font-size: 0.85rem;">${card.card_type}${card.last_four ? ' ••' + card.last_four : ''}</div>
+          <strong style="font-size:1rem;">${escapeHtml(card.nickname)}</strong>
+          <div class="muted" style="font-size:0.85rem;">${card.card_type}${card.last_four ? ' \u00b7\u00b7\u00b7\u00b7' + card.last_four : ''}</div>
         </div>
-        <button type="button" class="btn btn-danger btn-remove-card" data-id="${card.id}" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Remove</button>
+        <button type="button" class="btn btn-danger btn-sm btn-remove-card" data-id="${card.id}">Remove</button>
+      </div>
+      <div>
+        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:0.35rem;">💳 Cashback Rates</label>
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;">
+          <span style="flex:1;font-size:0.85rem;color:var(--muted);">Default (all other categories)</span>
+          <input type="number" class="cashback-default-rate" min="0" max="100" step="0.1" value="${defaultRate}" style="width:5rem;" /><span class="muted" style="font-size:0.8rem;">%</span>
+        </div>
+        <div class="cashback-rates-list">${rateRows}</div>
+        <div style="display:flex;gap:0.5rem;margin-top:0.5rem;flex-wrap:wrap;">
+          <select class="cashback-add-cat" style="flex:1;min-width:120px;">
+            <option value="">+ Category...</option>
+            ${categoryList.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("")}
+          </select>
+          <input type="number" class="cashback-add-rate" min="0" max="100" step="0.1" placeholder="%" style="width:5rem;" />
+          <button type="button" class="btn btn-sm btn-add-rate">Add</button>
+        </div>
+        <button type="button" class="btn btn-primary btn-save-cashback" style="margin-top:0.5rem;width:100%;">Save Rates</button>
       </div>
     `;
     container.appendChild(div);
-    
+
     div.querySelector(".btn-remove-card").addEventListener("click", () => removeCreditCard(card.id));
+
+    div.querySelector(".btn-add-rate").addEventListener("click", () => {
+      const catSel = div.querySelector(".cashback-add-cat");
+      const rateSel = div.querySelector(".cashback-add-rate");
+      const cat = catSel.value.trim();
+      const rate = parseFloat(rateSel.value);
+      if (!cat || isNaN(rate)) { showFlash("Pick a category and enter a rate."); return; }
+      const existing = div.querySelector(`.cashback-rate-row[data-cat="${CSS.escape(cat)}"]`);
+      if (existing) { showFlash(`${cat} already has a rate — edit it directly.`); return; }
+      const list = div.querySelector(".cashback-rates-list");
+      const row = document.createElement("div");
+      row.className = "cashback-rate-row";
+      row.dataset.cat = cat;
+      row.style.cssText = "display:flex;align-items:center;gap:0.5rem;";
+      row.innerHTML = `<span style="flex:1;font-size:0.85rem;">${escapeHtml(cat)}</span><input type="number" class="cashback-cat-rate" min="0" max="100" step="0.1" value="${rate}" style="width:5rem;"/><span class="muted" style="font-size:0.8rem;">%</span><button type="button" class="btn btn-ghost btn-sm btn-del-rate" style="color:var(--danger);">✕</button>`;
+      row.querySelector(".btn-del-rate").addEventListener("click", () => row.remove());
+      list.appendChild(row);
+      catSel.value = "";
+      rateSel.value = "";
+    });
+
+    div.querySelectorAll(".btn-del-rate").forEach(btn => {
+      btn.addEventListener("click", () => btn.closest(".cashback-rate-row").remove());
+    });
+
+    div.querySelector(".btn-save-cashback").addEventListener("click", async () => {
+      const defaultRate = parseFloat(div.querySelector(".cashback-default-rate").value) || 0;
+      const rates = [];
+      div.querySelectorAll(".cashback-rate-row").forEach(row => {
+        const cat = row.dataset.cat;
+        const rate = parseFloat(row.querySelector(".cashback-cat-rate").value) || 0;
+        if (cat) rates.push({ category: cat, rate });
+      });
+      try {
+        await api(`/api/credit-cards/${card.id}/cashback`, {
+          method: "PUT",
+          body: JSON.stringify({ default_rate: defaultRate, rates }),
+        });
+        await loadCashbackMap();
+        showFlash("Cashback rates saved.");
+      } catch (e) {
+        showFlash("Failed to save: " + e.message);
+      }
+    });
   });
 }
 
@@ -1842,16 +1936,14 @@ function buildBudgetEditorRows() {
     tdPct.dataset.pctFor = c;
     tdPct.textContent = "—";
     const tdDel = document.createElement("td");
-    if (isCustom) {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "btn btn-ghost btn-sm";
-      btn.textContent = "✕";
-      btn.title = "Remove custom category";
-      btn.style.color = "var(--danger)";
-      btn.addEventListener("click", () => deleteCustomCategory(c));
-      tdDel.appendChild(btn);
-    }
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "btn btn-ghost btn-sm";
+    btn.textContent = "✕";
+    btn.title = isCustom ? "Delete custom category" : "Hide category from your list";
+    btn.style.color = "var(--danger)";
+    btn.addEventListener("click", () => deleteCustomCategory(c));
+    tdDel.appendChild(btn);
     tr.appendChild(tdName);
     tr.appendChild(tdType);
     tr.appendChild(tdAmt);

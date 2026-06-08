@@ -126,11 +126,27 @@ def init_schema(conn: sqlite3.Connection) -> None:
             key TEXT PRIMARY KEY,
             value TEXT NOT NULL
         );
+
+        CREATE TABLE IF NOT EXISTS hidden_categories (
+            category TEXT NOT NULL,
+            user_id INTEGER NOT NULL DEFAULT 1,
+            PRIMARY KEY (category, user_id)
+        );
+
+        CREATE TABLE IF NOT EXISTS credit_card_cashback (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            card_id INTEGER NOT NULL,
+            category TEXT NOT NULL,
+            rate REAL NOT NULL DEFAULT 0 CHECK(rate >= 0),
+            user_id INTEGER NOT NULL DEFAULT 1,
+            UNIQUE(card_id, category)
+        );
         """
     )
     _ensure_column(conn, "income_payments", "payment_date", "TEXT DEFAULT NULL")
     _ensure_column(conn, "income_payments", "day_of_month", "INTEGER CHECK(day_of_month BETWEEN 1 AND 31)")
     _ensure_column(conn, "credit_cards", "cashback_percent", "REAL DEFAULT 0 CHECK(cashback_percent >= 0)")
+    _ensure_column(conn, "credit_cards", "default_cashback_rate", "REAL NOT NULL DEFAULT 1")
     for tbl in ("transactions", "income_streams", "custom_categories",
                 "category_metadata", "credit_cards", "debts",
                 "savings_goals", "recurring_expenses"):
