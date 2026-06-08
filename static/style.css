@@ -1,9 +1,10 @@
 :root {
+  /* Default: GitHub-inspired dark with violet/cyan */
   --bg: #0d1117;
   --surface: #161b22;
   --surface-solid: #21262d;
   --stroke: #30363d;
-  --ink: #c9d1d9;
+  --ink: #e2e8f0;
   --muted: #8b949e;
   --accent: #58a6ff;
   --accent-soft: #79c0ff;
@@ -11,8 +12,8 @@
   --secondary: #3fb950;
   --secondary-soft: #56d364;
   --secondary-dim: rgba(63, 185, 80, 0.15);
-  --success: #238636;
-  --success-dim: rgba(35, 134, 54, 0.15);
+  --success: #3fb950;
+  --success-dim: rgba(63, 185, 80, 0.15);
   --warning: #d29922;
   --warning-dim: rgba(210, 153, 34, 0.15);
   --danger: #f85149;
@@ -22,78 +23,184 @@
   --radius-lg: 12px;
   --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
   --mono: "IBM Plex Mono", "SF Mono", Consolas, monospace;
+  --grad-1: rgba(88, 166, 255, 0.10);
+  --grad-2: rgba(56, 189, 248, 0.08);
+  --grad-3: rgba(99, 102, 241, 0.07);
 }
 
+/* ─── Rose Noir ─── deep, romantic, eye-friendly */
 [data-theme="pink"] {
-  --bg: #1a0d12;
-  --surface: #251018;
-  --surface-solid: #31151f;
-  --stroke: #5a2535;
-  --ink: #f0c0d0;
-  --muted: #b07080;
-  --accent: #c2547a;
-  --accent-soft: #e07090;
-  --accent-dim: rgba(194, 84, 122, 0.15);
-  --secondary: #a8405e;
-  --secondary-soft: #c2547a;
-  --secondary-dim: rgba(168, 64, 94, 0.15);
-  --success: #7a9e6a;
-  --success-dim: rgba(122, 158, 106, 0.15);
-  --warning: #c09040;
-  --warning-dim: rgba(192, 144, 64, 0.15);
+  --bg: #0e090c;
+  --surface: #1a0f15;
+  --surface-solid: #251520;
+  --stroke: #3a1e2c;
+  --ink: #ecdce4;
+  --muted: #9a7585;
+  --accent: #a84d72;
+  --accent-soft: #c4708e;
+  --accent-dim: rgba(168, 77, 114, 0.15);
+  --secondary: #7a3858;
+  --secondary-soft: #a04d72;
+  --secondary-dim: rgba(122, 56, 88, 0.15);
+  --success: #5a8f6a;
+  --success-dim: rgba(90, 143, 106, 0.15);
+  --warning: #a87838;
+  --warning-dim: rgba(168, 120, 56, 0.15);
+  --danger: #b84040;
+  --danger-dim: rgba(184, 64, 64, 0.15);
+  --grad-1: rgba(168, 77, 114, 0.12);
+  --grad-2: rgba(122, 56, 88, 0.08);
+  --grad-3: rgba(196, 112, 142, 0.06);
+}
+
+/* ─── Obsidian ─── pure contrast, minimal */
+[data-theme="black"] {
+  --bg: #080808;
+  --surface: #111111;
+  --surface-solid: #1c1c1c;
+  --stroke: #2e2e2e;
+  --ink: #f0f0f0;
+  --muted: #787878;
+  --accent: #e0e0e0;
+  --accent-soft: #f5f5f5;
+  --accent-dim: rgba(240, 240, 240, 0.12);
+  --secondary: #a0a0a0;
+  --secondary-soft: #c0c0c0;
+  --secondary-dim: rgba(160, 160, 160, 0.12);
+  --success: #6aaf6a;
+  --success-dim: rgba(106, 175, 106, 0.15);
+  --warning: #c8a030;
+  --warning-dim: rgba(200, 160, 48, 0.15);
   --danger: #d05050;
   --danger-dim: rgba(208, 80, 80, 0.15);
+  --grad-1: rgba(255, 255, 255, 0.04);
+  --grad-2: rgba(255, 255, 255, 0.02);
+  --grad-3: rgba(255, 255, 255, 0.03);
 }
 
-[data-theme="black"] {
-  --bg: #000000;
-  --surface: #111111;
-  --surface-solid: #1a1a1a;
-  --stroke: #333333;
-  --ink: #ffffff;
-  --muted: #888888;
-  --accent: #ffffff;
-  --accent-soft: #cccccc;
-  --accent-dim: rgba(255, 255, 255, 0.15);
-  --secondary: #888888;
-  --secondary-soft: #aaaaaa;
-  --secondary-dim: rgba(136, 136, 136, 0.15);
-  --success: #666666;
-  --success-dim: rgba(102, 102, 102, 0.15);
-}
-
+/* ─── Nebula ─── deep space violet/purple */
 [data-theme="dark"] {
-  --bg: #050505;
-  --surface: #0a0a0a;
-  --surface-solid: #151515;
-  --stroke: #252525;
-  --ink: #e0e0e0;
-  --muted: #707070;
-  --accent: #7c3aed;
-  --accent-soft: #a78bfa;
-  --accent-dim: rgba(124, 58, 237, 0.15);
-  --secondary: #6366f1;
-  --secondary-soft: #818cf8;
-  --secondary-dim: rgba(99, 102, 241, 0.15);
-  --success: #10b981;
-  --success-dim: rgba(16, 185, 129, 0.15);
+  --bg: #07060f;
+  --surface: #0e0c1e;
+  --surface-solid: #16132e;
+  --stroke: #26224a;
+  --ink: #ddd8f8;
+  --muted: #7870a8;
+  --accent: #836fff;
+  --accent-soft: #a898ff;
+  --accent-dim: rgba(131, 111, 255, 0.15);
+  --secondary: #c060e8;
+  --secondary-soft: #d888f8;
+  --secondary-dim: rgba(192, 96, 232, 0.15);
+  --success: #38c490;
+  --success-dim: rgba(56, 196, 144, 0.15);
+  --warning: #d4a030;
+  --warning-dim: rgba(212, 160, 48, 0.15);
+  --danger: #e05858;
+  --danger-dim: rgba(224, 88, 88, 0.15);
+  --grad-1: rgba(131, 111, 255, 0.14);
+  --grad-2: rgba(192, 96, 232, 0.09);
+  --grad-3: rgba(168, 152, 255, 0.07);
 }
 
+/* ─── Forest ─── muted sage, calm and natural */
 [data-theme="green"] {
-  --bg: #0a1f0a;
-  --surface: #0f2a0f;
-  --surface-solid: #1a3a1a;
-  --stroke: #2d4a2d;
-  --ink: #d0f0d0;
-  --muted: #8fb88f;
-  --accent: #22c55e;
-  --accent-soft: #4ade80;
-  --accent-dim: rgba(34, 197, 94, 0.15);
-  --secondary: #16a34a;
-  --secondary-soft: #22c55e;
-  --secondary-dim: rgba(22, 163, 74, 0.15);
-  --success: #15803d;
-  --success-dim: rgba(21, 128, 61, 0.15);
+  --bg: #080f08;
+  --surface: #0d1a0d;
+  --surface-solid: #142414;
+  --stroke: #213521;
+  --ink: #d8edd8;
+  --muted: #7aaa7a;
+  --accent: #4ab870;
+  --accent-soft: #6ed090;
+  --accent-dim: rgba(74, 184, 112, 0.15);
+  --secondary: #38906a;
+  --secondary-soft: #50a880;
+  --secondary-dim: rgba(56, 144, 106, 0.15);
+  --success: #4aaa68;
+  --success-dim: rgba(74, 170, 104, 0.15);
+  --warning: #b89030;
+  --warning-dim: rgba(184, 144, 48, 0.15);
+  --danger: #c84848;
+  --danger-dim: rgba(200, 72, 72, 0.15);
+  --grad-1: rgba(74, 184, 112, 0.12);
+  --grad-2: rgba(56, 144, 106, 0.08);
+  --grad-3: rgba(110, 208, 144, 0.06);
+}
+
+/* ─── Deep Sea ─── dark navy with teal */
+[data-theme="ocean"] {
+  --bg: #060d18;
+  --surface: #0a1628;
+  --surface-solid: #102038;
+  --stroke: #1a3050;
+  --ink: #c8ddf0;
+  --muted: #5a88a8;
+  --accent: #30b4d8;
+  --accent-soft: #52cce8;
+  --accent-dim: rgba(48, 180, 216, 0.15);
+  --secondary: #2888b8;
+  --secondary-soft: #40a8d8;
+  --secondary-dim: rgba(40, 136, 184, 0.15);
+  --success: #30b878;
+  --success-dim: rgba(48, 184, 120, 0.15);
+  --warning: #d4a030;
+  --warning-dim: rgba(212, 160, 48, 0.15);
+  --danger: #e05858;
+  --danger-dim: rgba(224, 88, 88, 0.15);
+  --grad-1: rgba(48, 180, 216, 0.12);
+  --grad-2: rgba(40, 136, 184, 0.09);
+  --grad-3: rgba(82, 204, 232, 0.06);
+}
+
+/* ─── Ember ─── warm amber, cozy darkness */
+[data-theme="ember"] {
+  --bg: #0e0a06;
+  --surface: #1a1208;
+  --surface-solid: #261b10;
+  --stroke: #3c2814;
+  --ink: #f0dfc0;
+  --muted: #a08060;
+  --accent: #d88030;
+  --accent-soft: #f0a050;
+  --accent-dim: rgba(216, 128, 48, 0.15);
+  --secondary: #b05828;
+  --secondary-soft: #d07840;
+  --secondary-dim: rgba(176, 88, 40, 0.15);
+  --success: #68a868;
+  --success-dim: rgba(104, 168, 104, 0.15);
+  --warning: #c8a830;
+  --warning-dim: rgba(200, 168, 48, 0.15);
+  --danger: #c84040;
+  --danger-dim: rgba(200, 64, 64, 0.15);
+  --grad-1: rgba(216, 128, 48, 0.12);
+  --grad-2: rgba(176, 88, 40, 0.09);
+  --grad-3: rgba(240, 160, 80, 0.06);
+}
+
+/* ─── Espresso ─── rich coffee, warm and grounded */
+[data-theme="espresso"] {
+  --bg: #090605;
+  --surface: #16100c;
+  --surface-solid: #221810;
+  --stroke: #382418;
+  --ink: #f0e4d0;
+  --muted: #8a7060;
+  --accent: #b87840;
+  --accent-soft: #d09060;
+  --accent-dim: rgba(184, 120, 64, 0.15);
+  --secondary: #905028;
+  --secondary-soft: #b07040;
+  --secondary-dim: rgba(144, 80, 40, 0.15);
+  --success: #6a9a6a;
+  --success-dim: rgba(106, 154, 106, 0.15);
+  --warning: #c09030;
+  --warning-dim: rgba(192, 144, 48, 0.15);
+  --danger: #c04040;
+  --danger-dim: rgba(192, 64, 64, 0.15);
+  --grad-1: rgba(184, 120, 64, 0.12);
+  --grad-2: rgba(144, 80, 40, 0.09);
+  --grad-3: rgba(208, 144, 96, 0.06);
 }
 
 * {
@@ -111,11 +218,11 @@ body {
   color: var(--ink);
   line-height: 1.55;
   font-weight: 500;
-  background: var(--bg-deep);
+  background-color: var(--bg);
   background-image: 
-    radial-gradient(ellipse at 0% 0%, rgba(124, 58, 237, 0.15) 0%, transparent 50%),
-    radial-gradient(ellipse at 100% 0%, rgba(6, 182, 212, 0.1) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 100%, rgba(168, 85, 247, 0.08) 0%, transparent 50%);
+    radial-gradient(ellipse at 0% 0%, var(--grad-1) 0%, transparent 50%),
+    radial-gradient(ellipse at 100% 0%, var(--grad-2) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 100%, var(--grad-3) 0%, transparent 50%);
 }
 
 .bg-noise {
