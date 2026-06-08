@@ -2034,13 +2034,7 @@ function getCategoryTypeTag(cat) {
 function buildBudgetEditorRows() {
   const tbody = el("budget-editor-body");
   if (!tbody) return;
-  
-  // Add fade out animation
-  tbody.style.transition = "opacity 0.15s ease-out";
-  tbody.style.opacity = "0";
-  
-  setTimeout(() => {
-    tbody.innerHTML = "";
+  tbody.innerHTML = "";
   for (const c of categoryList) {
     const isCustom = customCategorySet.has(c);
     const tr = document.createElement("tr");
@@ -2110,13 +2104,6 @@ function buildBudgetEditorRows() {
     });
   }
   syncBudgetPercents();
-  
-  // Fade back in
-  setTimeout(() => {
-    tbody.style.transition = "opacity 0.2s ease-in";
-    tbody.style.opacity = "1";
-  }, 50);
-  }, 150);
 }
 
 async function deleteCustomCategory(name) {
@@ -2311,6 +2298,7 @@ async function reloadMonth() {
 }
 
 let budgetLoadTimeout;
+let prevTab = "expenses";
 function setTab(name) {
   const panels = ["expenses", "dashboard", "investing", "savings", "budget"];
   panels.forEach((panel) => {
@@ -2329,6 +2317,11 @@ function setTab(name) {
     btn.setAttribute("aria-selected", on ? "true" : "false");
   });
   
+  // Auto-save budget silently when leaving the budget tab
+  if (prevTab === "budget" && name !== "budget") {
+    saveBudget().catch(() => {});
+  }
+
   // Load budget form when switching to budget tab (with debouncing)
   if (name === "budget") {
     clearTimeout(budgetLoadTimeout);
@@ -2345,6 +2338,7 @@ function setTab(name) {
     populateFilterCategories();
     reloadMonth().catch(() => {});
   }
+  prevTab = name;
 }
 
 async function init() {
