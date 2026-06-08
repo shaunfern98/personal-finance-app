@@ -378,13 +378,20 @@ body {
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
-  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateY(0);
 }
 
 .btn:hover {
   border-color: var(--accent-soft);
   background: var(--surface-hover);
-  box-shadow: 0 2px 12px rgba(124, 58, 237, 0.15);
+  box-shadow: 0 4px 20px rgba(124, 58, 237, 0.2);
+  transform: translateY(-1px);
+}
+
+.btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.15);
 }
 
 .btn-ghost {
@@ -396,6 +403,7 @@ body {
 .btn-ghost:hover {
   color: var(--accent-soft);
   background: var(--surface-hover);
+  transform: translateY(-1px);
 }
 
 .btn-accent {
@@ -404,6 +412,23 @@ body {
   color: #fff;
   font-weight: 700;
   box-shadow: 0 6px 22px rgba(63, 185, 80, 0.35);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-accent::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s;
+}
+
+.btn-accent:hover::before {
+  left: 100%;
 }
 
 .btn-primary {
@@ -417,6 +442,7 @@ body {
 .btn-primary:hover {
   filter: brightness(1.1);
   box-shadow: 0 8px 26px rgba(63, 185, 80, 0.45);
+  transform: translateY(-1px);
 }
 
 .btn-danger {
@@ -593,6 +619,12 @@ body {
   border-radius: var(--radius);
   padding: 0.85rem 1rem;
   box-shadow: var(--shadow-glow);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pill:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.15);
 }
 
 .pill strong {
@@ -689,6 +721,7 @@ textarea {
   font-weight: 600;
   background: var(--surface-solid);
   color: var(--ink);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 input:focus,
@@ -697,6 +730,8 @@ textarea:focus {
   outline: 2px solid rgba(124, 58, 237, 0.55);
   outline-offset: 1px;
   border-color: var(--accent-soft);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+  transform: translateY(-1px);
 }
 
 select {
@@ -745,8 +780,13 @@ tr:last-child td {
   border-bottom: none;
 }
 
+tbody tr {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 tbody tr:hover td {
   background: var(--surface-hover);
+  transform: translateX(2px);
 }
 
 .table-budget tr.row-over td {

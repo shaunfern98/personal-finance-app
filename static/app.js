@@ -385,17 +385,38 @@ async function submitCustomCategory(ev) {
     return;
   }
   
+  // Preserve current budget values before rebuilding
+  const currentValues = {};
+  const tbody = el("budget-editor-body");
+  if (tbody) {
+    tbody.querySelectorAll(".budget-amt").forEach(inp => {
+      const cat = inp.dataset.cat;
+      if (cat) currentValues[cat] = inp.value;
+    });
+  }
+  
   try {
     await api("/api/categories", {
       method: "POST",
       body: JSON.stringify({ name }),
     });
     categoryList.push(name);
+    customCategorySet.add(name);
     categoryList.sort((a, b) => a.localeCompare(b));
     fillCategorySelect(el("category"), null);
     fillCategorySelect(el("edit-category"), null);
     populateFilterCategories();
     buildBudgetEditorRows();
+    
+    // Restore preserved values
+    if (tbody) {
+      Object.entries(currentValues).forEach(([cat, val]) => {
+        const inp = tbody.querySelector(`.budget-amt[data-cat="${CSS.escape(cat)}"]`);
+        if (inp) inp.value = val;
+      });
+    }
+    syncBudgetPercents();
+    
     el("dlg-category").close();
     showFlash(`Category "${name}" added.`);
   } catch (e) {
@@ -2003,7 +2024,13 @@ function getCategoryTypeTag(cat) {
 function buildBudgetEditorRows() {
   const tbody = el("budget-editor-body");
   if (!tbody) return;
-  tbody.innerHTML = "";
+  
+  // Add fade out animation
+  tbody.style.transition = "opacity 0.15s ease-out";
+  tbody.style.opacity = "0";
+  
+  setTimeout(() => {
+    tbody.innerHTML = "";
   for (const c of categoryList) {
     const isCustom = customCategorySet.has(c);
     const tr = document.createElement("tr");
@@ -2067,13 +2094,41 @@ function buildBudgetEditorRows() {
     });
   }
   syncBudgetPercents();
+  
+  // Fade back in
+  setTimeout(() => {
+    tbody.style.transition = "opacity 0.2s ease-in";
+    tbody.style.opacity = "1";
+  }, 50);
+  }, 150);
 }
 
 async function deleteCustomCategory(name) {
   if (!confirm(`Remove "${name}" from your categories? Existing transactions using it will not be deleted.`)) return;
+  
+  // Preserve current budget values before rebuilding
+  const currentValues = {};
+  const tbody = el("budget-editor-body");
+  if (tbody) {
+    tbody.querySelectorAll(".budget-amt").forEach(inp => {
+      const cat = inp.dataset.cat;
+      if (cat && cat !== name) currentValues[cat] = inp.value;
+    });
+  }
+  
   try {
     await api(`/api/categories/${encodeURIComponent(name)}`, { method: "DELETE" });
     await loadCategoryList();
+    
+    // Restore preserved values
+    if (tbody) {
+      Object.entries(currentValues).forEach(([cat, val]) => {
+        const inp = tbody.querySelector(`.budget-amt[data-cat="${CSS.escape(cat)}"]`);
+        if (inp) inp.value = val;
+      });
+    }
+    syncBudgetPercents();
+    
     showFlash(`Category "${name}" removed.`);
   } catch (e) {
     showFlash(e.message);
