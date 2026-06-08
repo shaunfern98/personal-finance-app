@@ -1607,6 +1607,222 @@ body.mobile-view #tx-body td:nth-child(8) {
 }
 /* ─── end mobile ─── */
 
+/* ═══════════════════════════════════
+   EXPENSES TAB REDESIGN
+   ═══════════════════════════════════ */
+
+/* Month nav */
+.month-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--surface);
+  border: 1px solid var(--stroke);
+  border-radius: 999px;
+  padding: 0.35rem 0.6rem;
+  width: fit-content;
+  margin-bottom: 1.25rem;
+  box-shadow: var(--shadow);
+}
+.month-nav-input {
+  border: none !important;
+  background: transparent !important;
+  color: var(--ink) !important;
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 0.2rem 0.4rem;
+  outline: none;
+}
+.month-nav-btn {
+  padding: 0.3rem 0.7rem !important;
+  font-size: 1rem !important;
+  border-radius: 999px !important;
+}
+.month-nav-today {
+  border-radius: 999px !important;
+  font-size: 0.82rem !important;
+  padding: 0.3rem 0.85rem !important;
+}
+
+/* KPI strip */
+.kpi-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+.kpi-strip .pill {
+  flex: 1 1 140px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  background: var(--surface);
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.kpi-strip .pill:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+}
+.kpi-strip .pill strong {
+  font-size: 1.2rem;
+  font-weight: 700;
+  font-family: var(--mono);
+}
+
+/* Main layout: sidebar + main */
+.expenses-layout {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 1.1rem;
+  align-items: start;
+}
+
+/* Log expense sidebar */
+.expenses-sidebar {
+  position: sticky;
+  top: 1rem;
+}
+.expenses-form-card {
+  padding: 1.25rem;
+}
+.expenses-form-header {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-bottom: 1.1rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--stroke);
+}
+.expenses-form-icon {
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: var(--radius-md);
+  background: var(--accent-dim);
+  border: 1px solid var(--accent-dim);
+  color: var(--accent-soft);
+  font-size: 1.4rem;
+  font-weight: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.expenses-form-title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0;
+}
+.expenses-form-sub {
+  font-size: 0.8rem;
+  margin: 0;
+}
+.expenses-form .form-row {
+  margin-bottom: 0;
+}
+.expenses-form label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 0.25rem;
+  display: block;
+}
+.expenses-form input,
+.expenses-form select {
+  font-size: 0.9rem;
+}
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0.25rem 0;
+}
+.btn-full {
+  width: 100%;
+  margin-top: 0.5rem;
+  justify-content: center;
+}
+
+/* Main column */
+.expenses-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  min-width: 0;
+}
+
+/* Transaction list header */
+.tx-list-header {
+  margin-bottom: 1rem;
+}
+.tx-list-title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.tx-list-title-row h2 {
+  margin: 0;
+}
+.tx-total-badge {
+  font-size: 0.82rem;
+  background: var(--surface-solid);
+  border: 1px solid var(--stroke);
+  border-radius: 999px;
+  padding: 0.15rem 0.65rem;
+  font-family: var(--mono);
+}
+.tx-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+.tx-search {
+  flex: 1 1 180px;
+  min-width: 140px;
+}
+.tx-filter-select {
+  flex: 0 0 auto;
+  min-width: 130px;
+}
+
+/* Responsive: single column on tablet/mobile */
+@media (max-width: 1024px) {
+  .expenses-layout {
+    grid-template-columns: 1fr;
+  }
+  .expenses-sidebar {
+    position: static;
+  }
+  .month-nav {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 600px) {
+  .kpi-strip .pill {
+    flex: 1 1 120px;
+  }
+  .tx-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .tx-search,
+  .tx-filter-select {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+/* ─── END EXPENSES REDESIGN ─── */
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

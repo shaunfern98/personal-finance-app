@@ -2299,13 +2299,12 @@ async function reloadMonth() {
 
 let budgetLoadTimeout;
 let prevTab = "expenses";
-function setTab(name) {
+async function setTab(name) {
   const panels = ["expenses", "dashboard", "investing", "savings", "budget"];
   panels.forEach((panel) => {
     const node = el(`panel-${panel}`);
     if (!node) return;
     node.hidden = panel !== name;
-    // Re-trigger entrance animation
     if (panel === name) {
       node.style.animation = "none";
       requestAnimationFrame(() => { node.style.animation = ""; });
@@ -2316,27 +2315,25 @@ function setTab(name) {
     btn.classList.toggle("active", on);
     btn.setAttribute("aria-selected", on ? "true" : "false");
   });
-  
-  // Auto-save budget silently when leaving the budget tab
+
+  // AWAIT budget save before anything else, so expenses tab always has fresh data
   if (prevTab === "budget" && name !== "budget") {
-    saveBudget().catch(() => {});
+    await saveBudget().catch(() => {});
   }
 
-  // Load budget form when switching to budget tab (with debouncing)
   if (name === "budget") {
     clearTimeout(budgetLoadTimeout);
     budgetLoadTimeout = setTimeout(loadBudgetForm, 100);
   } else {
     clearTimeout(budgetLoadTimeout);
   }
-  
-  // Always refresh category dropdowns and budget status when switching to expenses tab
+
   if (name === "expenses") {
     sortCategories();
     fillCategorySelect(el("category"), null);
     fillCategorySelect(el("edit-category"), null);
     populateFilterCategories();
-    reloadMonth().catch(() => {});
+    await reloadMonth().catch(() => {});
   }
   prevTab = name;
 }

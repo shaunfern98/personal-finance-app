@@ -12,10 +12,10 @@
       href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/style.css?v=5" />
+    <link rel="stylesheet" href="/style.css?v=6" />
     <link rel="manifest" href="/manifest.json" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" defer></script>
-    <script src="/app.js?v=5" defer></script>
+    <script src="/app.js?v=6" defer></script>
   </head>
   <body>
     <div class="bg-noise" aria-hidden="true"></div>
@@ -55,182 +55,194 @@
       </header>
 
       <section id="panel-expenses" class="tab-panel">
-        <div class="month-bar card card--inline">
-          <button type="button" class="btn btn-ghost" id="btn-prev" aria-label="Previous month">←</button>
-          <input type="month" id="month-input" />
-          <button type="button" class="btn btn-ghost" id="btn-next" aria-label="Next month">→</button>
-          <button type="button" class="btn btn-accent" id="btn-today">This month</button>
+
+        <!-- Month navigation -->
+        <div class="month-nav">
+          <button type="button" class="btn btn-ghost month-nav-btn" id="btn-prev" aria-label="Previous month">&#8592;</button>
+          <input type="month" id="month-input" class="month-nav-input" />
+          <button type="button" class="btn btn-ghost month-nav-btn" id="btn-next" aria-label="Next month">&#8594;</button>
+          <button type="button" class="btn btn-accent month-nav-today" id="btn-today">Today</button>
         </div>
 
-        <section class="summary" id="summary"></section>
+        <!-- KPI summary strip -->
+        <section class="kpi-strip" id="summary"></section>
 
-        <section class="card card--glow" id="panel-budget-status">
-          <div class="card-head">
-            <h2>Budget vs actual</h2>
-            <p class="muted">Compared to your saved monthly budgets. Rows turn red when you are over.</p>
-          </div>
-          <div class="budget-total-bar" id="budget-total-bar"></div>
-          <div class="table-wrap table-wrap--rounded">
-            <table class="table-budget">
-              <thead>
-                <tr>
-                  <th>Category</th>
-                  <th>Budget</th>
-                  <th>Spent</th>
-                  <th>Left</th>
-                </tr>
-              </thead>
-              <tbody id="budget-status-body"></tbody>
-            </table>
-          </div>
-        </section>
+        <!-- Main content: 2-col on desktop, stacked on mobile -->
+        <div class="expenses-layout">
 
-        <div class="layout-toggles card card--inline" id="dash-toggles">
-          <span class="muted layout-toggles-label">Dashboard</span>
-          <label><input type="checkbox" data-widget="daily" /> By day</label>
-          <label><input type="checkbox" data-widget="category" /> By category</label>
-          <label><input type="checkbox" data-widget="list" /> Transactions</label>
-        </div>
-
-        <div class="grid grid-2">
-          <section class="card card--glow">
-            <div class="card-head">
-              <h2>Log purchase</h2>
-              <p class="muted">What you bought, category, optional notes, and fixed vs variable.</p>
-            </div>
-            <form id="form-add" class="form">
-              <div class="form-row cols-2">
+          <!-- LEFT: Add transaction form -->
+          <aside class="expenses-sidebar">
+            <section class="card expenses-form-card">
+              <div class="expenses-form-header">
+                <span class="expenses-form-icon">+</span>
                 <div>
-                  <label for="amount">Amount</label>
-                  <input id="amount" name="amount" type="number" min="0" step="0.01" required />
-                </div>
-                <div>
-                  <label for="date">Date</label>
-                  <input id="date" name="date" type="date" required />
+                  <h2 class="expenses-form-title">Log Expense</h2>
+                  <p class="muted expenses-form-sub">Record a new transaction</p>
                 </div>
               </div>
-              <div>
-                <label for="category">Category</label>
-                <select id="category" name="category" required></select>
-              </div>
-              <div>
-                <label for="purchase">What you bought</label>
-                <input
-                  id="purchase"
-                  name="purchase"
-                  type="text"
-                  required
-                  maxlength="500"
-                  placeholder="e.g. Whole Foods run, Shell gas, date night dinner"
-                  autocomplete="off"
-                />
-              </div>
-              <div class="form-row cols-2">
-                <div>
-                  <label for="payment_method">Payment method</label>
-                  <select id="payment_method" name="payment_method" required>
-                    <option value="debit">Debit</option>
-                    <option value="credit">Credit Card</option>
-                    <option value="cash">Cash</option>
-                  </select>
+              <form id="form-add" class="form expenses-form">
+                <div class="form-row cols-2">
+                  <div>
+                    <label for="amount">Amount</label>
+                    <input id="amount" name="amount" type="number" min="0" step="0.01" required placeholder="0.00" />
+                  </div>
+                  <div>
+                    <label for="date">Date</label>
+                    <input id="date" name="date" type="date" required />
+                  </div>
                 </div>
                 <div>
-                  <label for="credit_card_select">Credit card (optional)</label>
-                  <select id="credit_card_select" name="credit_card_select">
-                    <option value="">Select a card...</option>
-                  </select>
-                </div>
-              </div>
-              <div class="form-row cols-2">
-                <div>
-                  <label for="cost_type">Purchase type</label>
-                  <select id="cost_type" name="cost_type" required>
-                    <option value="variable">Variable</option>
-                    <option value="fixed">Fixed</option>
-                  </select>
+                  <label for="category">Category</label>
+                  <select id="category" name="category" required></select>
                 </div>
                 <div>
-                  <label for="tags">Tags (optional)</label>
-                  <input id="tags" name="tags" type="text" maxlength="500" placeholder="e.g. essential, impulse, work-related" />
+                  <label for="purchase">Description</label>
+                  <input id="purchase" name="purchase" type="text" required maxlength="500"
+                    placeholder="e.g. Whole Foods, Shell gas, dinner out" autocomplete="off" />
                 </div>
-              </div>
-              <div>
-                <label>
+                <div class="form-row cols-2">
+                  <div>
+                    <label for="payment_method">Payment</label>
+                    <select id="payment_method" name="payment_method" required>
+                      <option value="debit">Debit</option>
+                      <option value="credit">Credit Card</option>
+                      <option value="cash">Cash</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label for="credit_card_select">Card (optional)</label>
+                    <select id="credit_card_select" name="credit_card_select">
+                      <option value="">None</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-row cols-2">
+                  <div>
+                    <label for="cost_type">Type</label>
+                    <select id="cost_type" name="cost_type" required>
+                      <option value="variable">Variable</option>
+                      <option value="fixed">Fixed</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label for="tags">Tags</label>
+                    <input id="tags" name="tags" type="text" maxlength="500" placeholder="optional" />
+                  </div>
+                </div>
+                <label class="checkbox-label">
                   <input type="checkbox" id="is_recurring" name="is_recurring" />
-                  Recurring monthly expense
+                  <span>Recurring monthly</span>
+                </label>
+                <div>
+                  <label for="note">Notes</label>
+                  <input id="note" name="note" type="text" maxlength="2000" placeholder="Optional note…" />
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Save Transaction</button>
+              </form>
+            </section>
+          </aside>
+
+          <!-- RIGHT: Charts + transaction list -->
+          <div class="expenses-main">
+
+            <!-- Budget vs Actual -->
+            <section class="card" id="panel-budget-status">
+              <div class="card-head card-head--row">
+                <div>
+                  <h2>Budget vs Actual</h2>
+                  <p class="muted">Your monthly budgets. Red = over budget.</p>
+                </div>
+              </div>
+              <div class="budget-total-bar" id="budget-total-bar"></div>
+              <div class="table-wrap table-wrap--rounded">
+                <table class="table-budget">
+                  <thead>
+                    <tr>
+                      <th>Category</th>
+                      <th>Budget</th>
+                      <th>Spent</th>
+                      <th>Left</th>
+                    </tr>
+                  </thead>
+                  <tbody id="budget-status-body"></tbody>
+                </table>
+              </div>
+            </section>
+
+            <!-- Dashboard widgets toggle -->
+            <div class="layout-toggles card card--inline" id="dash-toggles">
+              <span class="muted layout-toggles-label">Charts</span>
+              <label><input type="checkbox" data-widget="daily" /> By day</label>
+              <label><input type="checkbox" data-widget="category" /> By category</label>
+              <label><input type="checkbox" data-widget="list" /> Transactions</label>
+            </div>
+
+            <!-- Daily + Category charts -->
+            <section class="card card--glow" id="panel-daily">
+              <div class="card-head">
+                <h2>Spend by Day</h2>
+                <p class="muted">Daily totals for the month.</p>
+              </div>
+              <div class="chart-box"><canvas id="chart-daily"></canvas></div>
+            </section>
+
+            <section class="card card--glow" id="panel-category">
+              <div class="card-head card-head--row">
+                <div>
+                  <h2>Spend by Category</h2>
+                  <p class="muted">Totals for this month.</p>
+                </div>
+                <label class="toggle-pill">
+                  <input type="checkbox" id="toggle-category-stack" />
+                  <span>Stack</span>
                 </label>
               </div>
-              <div>
-                <label for="note">Notes (optional)</label>
-                <input id="note" name="note" type="text" maxlength="2000" placeholder="Anything extra to remember…" />
+              <div class="chart-box"><canvas id="chart-category"></canvas></div>
+            </section>
+
+            <!-- Transactions list -->
+            <section class="card" id="panel-list">
+              <div class="tx-list-header">
+                <div class="tx-list-title-row">
+                  <h2>Transactions</h2>
+                  <span class="muted tx-total-badge" id="monthly-total-display"></span>
+                </div>
+                <div class="tx-filters">
+                  <input type="text" id="search-tx" class="tx-search" placeholder="&#128269; Search…" />
+                  <select id="filter-category" class="tx-filter-select">
+                    <option value="">All Categories</option>
+                  </select>
+                  <select id="filter-payment" class="tx-filter-select">
+                    <option value="">All Methods</option>
+                    <option value="debit">Debit</option>
+                    <option value="credit">Credit</option>
+                    <option value="cash">Cash</option>
+                  </select>
+                  <button type="button" class="btn btn-ghost btn-sm" id="btn-sort-date">Date ↑</button>
+                </div>
               </div>
-              <button type="submit" class="btn btn-primary">Save transaction</button>
-            </form>
-          </section>
-
-          <section class="card card--glow" id="panel-daily">
-            <div class="card-head">
-              <h2>Spend by day</h2>
-              <p class="muted">Total spend for each day of the month.</p>
-            </div>
-            <div class="chart-box"><canvas id="chart-daily"></canvas></div>
-          </section>
-        </div>
-
-        <div class="grid" style="margin-top: 1rem">
-          <section class="card card--glow" id="panel-category">
-            <div class="card-head card-head--row">
-              <div>
-                <h2>Spend by category</h2>
-                <p class="muted">Totals for this month, or stacked by individual purchases.</p>
+              <div class="table-wrap table-wrap--rounded">
+                <table class="tx-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Category</th>
+                      <th>Description</th>
+                      <th>Payment</th>
+                      <th>Type</th>
+                      <th>Amount</th>
+                      <th>Cashback</th>
+                      <th>Notes</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="tx-body"></tbody>
+                </table>
               </div>
-              <label class="toggle-pill">
-                <input type="checkbox" id="toggle-category-stack" />
-                <span>Stack purchases</span>
-              </label>
-            </div>
-            <div class="chart-box"><canvas id="chart-category"></canvas></div>
-          </section>
+            </section>
 
-          <section class="card card--glow" id="panel-list">
-            <div class="card-head">
-              <h2>Transactions</h2>
-              <p class="muted">Edit or delete any row. Over-budget categories are highlighted.</p>
-            </div>
-            <div class="form-row form-row--inline" style="margin-bottom: 1rem;">
-              <input type="text" id="search-tx" placeholder="Search transactions..." style="flex: 1;" />
-              <select id="filter-category" style="max-width: 200px;">
-                <option value="">All Categories</option>
-              </select>
-              <select id="filter-payment" style="max-width: 150px;">
-                <option value="">All Methods</option>
-                <option value="debit">Debit</option>
-                <option value="credit">Credit</option>
-                <option value="cash">Cash</option>
-              </select>
-              <button type="button" class="btn btn-ghost" id="btn-sort-date">Date ↑</button>
-            </div>
-            <div class="muted" style="margin-bottom: 0.5rem; font-size: 0.85rem;" id="monthly-total-display">Monthly Total: —</div>
-            <div class="table-wrap table-wrap--rounded">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Category</th>
-                    <th>Purchase</th>
-                    <th>Payment</th>
-                    <th>Type</th>
-                    <th>Amount</th>
-                    <th>Cashback</th>
-                    <th>Notes</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody id="tx-body"></tbody>
-              </table>
-            </div>
-          </section>
-        </div>
+          </div><!-- /expenses-main -->
+        </div><!-- /expenses-layout -->
       </section>
 
       <section id="panel-dashboard" class="tab-panel" hidden>
