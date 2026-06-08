@@ -238,7 +238,9 @@ function renderBudgetStatusTable(data) {
   const body = el("budget-status-body");
   body.innerHTML = "";
   if (!data || !data.items) return;
-  for (const row of data.items) {
+  // Always sort alphabetically
+  const sorted = [...data.items].sort((a, b) => a.category.localeCompare(b.category));
+  for (const row of sorted) {
     const tr = document.createElement("tr");
     if (row.over) tr.classList.add("row-over");
     tr.innerHTML = `
@@ -2335,12 +2337,13 @@ function setTab(name) {
     clearTimeout(budgetLoadTimeout);
   }
   
-  // Always refresh category dropdowns when switching to expenses tab
+  // Always refresh category dropdowns and budget status when switching to expenses tab
   if (name === "expenses") {
     sortCategories();
     fillCategorySelect(el("category"), null);
     fillCategorySelect(el("edit-category"), null);
     populateFilterCategories();
+    reloadMonth().catch(() => {});
   }
 }
 

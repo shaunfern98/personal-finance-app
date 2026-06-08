@@ -28,32 +28,62 @@
   --grad-3: rgba(99, 102, 241, 0.07);
 }
 
-/* ─── Dusty Rose ─── muted, desaturated, easy on eyes */
+/* ─── Sakura ─── elegant dark rose, sleek and aesthetic */
 [data-theme="pink"] {
-  --bg: #090608;
-  --surface: #0f0b0d;
-  --surface-solid: #181316;
-  --surface-hover: #211a1e;
-  --stroke: #2a1f24;
-  --ink: #b8a8ae;
-  --muted: #6e5660;
-  --accent: #7a4255;
-  --accent-soft: #956070;
-  --accent-dim: rgba(122, 66, 85, 0.13);
-  --secondary: #5a3045;
-  --secondary-soft: #7a4860;
-  --secondary-dim: rgba(90, 48, 69, 0.13);
-  --success: #456850;
-  --success-dim: rgba(69, 104, 80, 0.13);
-  --warning: #786040;
-  --warning-dim: rgba(120, 96, 64, 0.13);
-  --danger: #883040;
-  --danger-dim: rgba(136, 48, 64, 0.13);
-  --shadow-glow: 0 2px 12px rgba(122, 66, 85, 0.08);
-  --shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-  --grad-1: rgba(122, 66, 85, 0.07);
-  --grad-2: rgba(90, 48, 69, 0.05);
-  --grad-3: rgba(149, 96, 112, 0.03);
+  --bg: #080509;
+  --surface: #100a12;
+  --surface-solid: #19101c;
+  --surface-hover: #231528;
+  --stroke: #341d3a;
+  --ink: #e8d5ec;
+  --muted: #8a6a94;
+  --accent: #c060a0;
+  --accent-soft: #d880b8;
+  --accent-dim: rgba(192, 96, 160, 0.15);
+  --secondary: #9040a0;
+  --secondary-soft: #b060c0;
+  --secondary-dim: rgba(144, 64, 160, 0.15);
+  --success: #50a878;
+  --success-dim: rgba(80, 168, 120, 0.15);
+  --warning: #c09040;
+  --warning-dim: rgba(192, 144, 64, 0.15);
+  --danger: #d04060;
+  --danger-dim: rgba(208, 64, 96, 0.15);
+  --shadow-glow: 0 4px 24px rgba(192, 96, 160, 0.12);
+  --shadow: 0 8px 36px rgba(0, 0, 0, 0.6);
+  --radius: 10px;
+  --grad-1: rgba(192, 96, 160, 0.10);
+  --grad-2: rgba(144, 64, 160, 0.07);
+  --grad-3: rgba(216, 128, 184, 0.05);
+}
+
+/* ─── Velvet Rose ─── rich dark mauve, deep and luxurious */
+[data-theme="velvet"] {
+  --bg: #060408;
+  --surface: #0e0812;
+  --surface-solid: #160c1e;
+  --surface-hover: #1e1028;
+  --stroke: #2e1840;
+  --ink: #ddc8e8;
+  --muted: #7a5888;
+  --accent: #a04898;
+  --accent-soft: #c068b8;
+  --accent-dim: rgba(160, 72, 152, 0.16);
+  --secondary: #7830a8;
+  --secondary-soft: #9850c8;
+  --secondary-dim: rgba(120, 48, 168, 0.16);
+  --success: #489870;
+  --success-dim: rgba(72, 152, 112, 0.16);
+  --warning: #b88838;
+  --warning-dim: rgba(184, 136, 56, 0.16);
+  --danger: #c83858;
+  --danger-dim: rgba(200, 56, 88, 0.16);
+  --shadow-glow: 0 4px 28px rgba(160, 72, 152, 0.14);
+  --shadow: 0 8px 40px rgba(0, 0, 0, 0.65);
+  --radius: 10px;
+  --grad-1: rgba(160, 72, 152, 0.11);
+  --grad-2: rgba(120, 48, 168, 0.08);
+  --grad-3: rgba(192, 104, 184, 0.05);
 }
 
 /* ─── Obsidian ─── pure contrast, minimal */
