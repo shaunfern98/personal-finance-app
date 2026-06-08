@@ -28,29 +28,32 @@
   --grad-3: rgba(99, 102, 241, 0.07);
 }
 
-/* ─── Rose Noir ─── deep, romantic, eye-friendly */
+/* ─── Dusty Rose ─── muted, desaturated, easy on eyes */
 [data-theme="pink"] {
-  --bg: #0a0709;
-  --surface: #110c0f;
-  --surface-solid: #1a1417;
-  --stroke: #2d1f26;
-  --ink: #c4b0b8;
-  --muted: #7a5f6a;
-  --accent: #8a4a62;
-  --accent-soft: #a6687f;
-  --accent-dim: rgba(138, 74, 98, 0.12);
-  --secondary: #6b3a50;
-  --secondary-soft: #8a5268;
-  --secondary-dim: rgba(107, 58, 80, 0.12);
-  --success: #4e7a5d;
-  --success-dim: rgba(78, 122, 93, 0.12);
-  --warning: #8a6a3a;
-  --warning-dim: rgba(138, 106, 58, 0.12);
-  --danger: #9a3a3a;
-  --danger-dim: rgba(154, 58, 58, 0.12);
-  --grad-1: rgba(138, 74, 98, 0.08);
-  --grad-2: rgba(107, 58, 80, 0.06);
-  --grad-3: rgba(166, 104, 127, 0.04);
+  --bg: #090608;
+  --surface: #0f0b0d;
+  --surface-solid: #181316;
+  --surface-hover: #211a1e;
+  --stroke: #2a1f24;
+  --ink: #b8a8ae;
+  --muted: #6e5660;
+  --accent: #7a4255;
+  --accent-soft: #956070;
+  --accent-dim: rgba(122, 66, 85, 0.13);
+  --secondary: #5a3045;
+  --secondary-soft: #7a4860;
+  --secondary-dim: rgba(90, 48, 69, 0.13);
+  --success: #456850;
+  --success-dim: rgba(69, 104, 80, 0.13);
+  --warning: #786040;
+  --warning-dim: rgba(120, 96, 64, 0.13);
+  --danger: #883040;
+  --danger-dim: rgba(136, 48, 64, 0.13);
+  --shadow-glow: 0 2px 12px rgba(122, 66, 85, 0.08);
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --grad-1: rgba(122, 66, 85, 0.07);
+  --grad-2: rgba(90, 48, 69, 0.05);
+  --grad-3: rgba(149, 96, 112, 0.03);
 }
 
 /* ─── Obsidian ─── pure contrast, minimal */
@@ -304,11 +307,12 @@ body {
   padding: 0.5rem 1.15rem;
   border-radius: 999px;
   cursor: pointer;
-  transition: color 0.15s, background 0.15s, transform 0.15s;
+  transition: color 0.2s ease, background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .tab:hover {
   color: var(--accent-soft);
+  transform: translateY(-1px);
 }
 
 .tab.active {
@@ -475,6 +479,7 @@ body {
   box-shadow: var(--shadow);
   backdrop-filter: blur(14px);
   position: relative;
+  transition: box-shadow 0.25s ease, border-color 0.25s ease;
 }
 
 .card--inline {
@@ -955,21 +960,14 @@ dialog::backdrop {
 .budget-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
   align-items: center;
+  gap: 0.6rem;
   margin-top: 1rem;
 }
 
 .budget-actions .btn {
   flex-shrink: 0;
-}
-
-.budget-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.75rem;
-  margin-top: 1rem;
+  height: 2.35rem;
 }
 
 /* Scrollbar styling */
@@ -1337,31 +1335,43 @@ textarea:focus {
   min-width: 145px;
 }
 
-.budget-actions {
-  justify-content: flex-end;
-}
-
 .budget-actions .muted,
 .budget-actions [id$="-hint"] {
   min-height: 2.35rem;
   display: inline-flex;
   align-items: center;
+  font-size: 0.85rem;
 }
 
 dialog {
   border: 1px solid var(--stroke);
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.07), transparent 42%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.06), transparent 40%),
     var(--surface);
   color: var(--ink);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
   backdrop-filter: blur(22px);
+  opacity: 0;
+  transform: translateY(12px) scale(0.97);
+  transition: opacity 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+dialog[open] {
+  opacity: 1;
+  transform: translateY(0) scale(1);
 }
 
 dialog::backdrop {
-  background: rgba(2, 6, 23, 0.68);
-  backdrop-filter: blur(8px);
+  background: rgba(2, 6, 23, 0.72);
+  backdrop-filter: blur(6px);
+  animation: fadeInBackdrop 0.2s ease forwards;
+}
+
+@keyframes fadeInBackdrop {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 /* ─── Bottom nav (mobile) ─── */

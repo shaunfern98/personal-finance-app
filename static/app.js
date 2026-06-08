@@ -2315,6 +2315,11 @@ function setTab(name) {
     const node = el(`panel-${panel}`);
     if (!node) return;
     node.hidden = panel !== name;
+    // Re-trigger entrance animation
+    if (panel === name) {
+      node.style.animation = "none";
+      requestAnimationFrame(() => { node.style.animation = ""; });
+    }
   });
   document.querySelectorAll(".tab").forEach((btn) => {
     const on = btn.getAttribute("data-tab") === name;
@@ -2328,6 +2333,14 @@ function setTab(name) {
     budgetLoadTimeout = setTimeout(loadBudgetForm, 100);
   } else {
     clearTimeout(budgetLoadTimeout);
+  }
+  
+  // Always refresh category dropdowns when switching to expenses tab
+  if (name === "expenses") {
+    sortCategories();
+    fillCategorySelect(el("category"), null);
+    fillCategorySelect(el("edit-category"), null);
+    populateFilterCategories();
   }
 }
 
