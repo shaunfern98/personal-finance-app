@@ -205,6 +205,20 @@ def _get_monthly_salary(db: sqlite3.Connection, uid: int = 1) -> float:
             return 0.0
 
 
+def _get_all_categories(db: sqlite3.Connection, uid: int = 1) -> list[str]:
+    """Return full category list: predefined + user custom (excluding hidden)."""
+    custom_rows = db.execute(
+        "SELECT category FROM custom_categories WHERE user_id = ? ORDER BY category ASC", (uid,)
+    ).fetchall()
+    custom = [r["category"] for r in custom_rows]
+    hidden_rows = db.execute(
+        "SELECT category FROM hidden_categories WHERE user_id = ?", (uid,)
+    ).fetchall()
+    hidden = {r["category"] for r in hidden_rows}
+    all_cats = list(dict.fromkeys(list(EXPENSE_CATEGORIES) + custom))
+    return [c for c in all_cats if c not in hidden]
+
+
 def _get_category_budgets(db: sqlite3.Connection, uid: int = 1) -> dict[str, float]:
     raw = _setting_get(db, "category_budgets", "{}", uid=uid)
     try:
@@ -212,7 +226,7 @@ def _get_category_budgets(db: sqlite3.Connection, uid: int = 1) -> dict[str, flo
     except json.JSONDecodeError:
         data = {}
     out: dict[str, float] = {}
-    for c in EXPENSE_CATEGORIES:
+    for c in _get_all_categories(db, uid=uid):
         try:
             v = float(data.get(c, 0) or 0)
         except (TypeError, ValueError):
@@ -1399,8 +1413,10 @@ def put_budget() -> Response:
     allocs_in = data.get("allocations")
     if not isinstance(allocs_in, dict):
         return jsonify({"error": "allocations must be an object"}), 400
+    uid = g.uid
+    db = get_db()
     out: dict[str, float] = {}
-    for c in EXPENSE_CATEGORIES:
+    for c in _get_all_categories(db, uid=uid):
         raw = allocs_in.get(c, 0)
         try:
             v = float(raw)
@@ -1409,8 +1425,6 @@ def put_budget() -> Response:
         if v < 0:
             return jsonify({"error": f"budget for {c} must be >= 0"}), 400
         out[c] = round(v, 2)
-    uid = g.uid
-    db = get_db()
     _setting_set(db, "monthly_salary", json.dumps(round(salary, 2)), uid=uid)
     _setting_set(db, "category_budgets", json.dumps(out), uid=uid)
     db.commit()
@@ -1435,6 +1449,7 @@ def budget_status() -> Response:
     start, end = _month_range(y, m)
     uid = g.uid
     db = get_db()
+    all_cats = _get_all_categories(db, uid=uid)
     budgets = _get_category_budgets(db, uid=uid)
     rows = db.execute(
         """
@@ -1449,8 +1464,8 @@ def budget_status() -> Response:
     items: list[dict[str, Any]] = []
     total_budget = 0.0
     total_remaining = 0.0
-    for c in EXPENSE_CATEGORIES:
-        b = budgets[c]
+    for c in all_cats:
+        b = budgets.get(c, 0.0)
         s = spent.get(c, 0.0)
         rem = b - s
         total_budget += b
@@ -1464,7 +1479,7 @@ def budget_status() -> Response:
                 "over": s > b + 1e-9,
             }
         )
-    spent_tracked = sum(spent.get(c, 0.0) for c in EXPENSE_CATEGORIES)
+    spent_tracked = sum(spent.get(c, 0.0) for c in all_cats)
     return jsonify(
         {
             "month": f"{y:04d}-{m:02d}",
