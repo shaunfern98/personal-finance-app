@@ -2029,6 +2029,7 @@ function buildBudgetEditorRows() {
     inp.type = "number";
     inp.className = "budget-amt";
     inp.min = "0";
+    inp.max = "999999999";
     inp.step = "0.01";
     inp.dataset.cat = c;
     inp.value = "0";
