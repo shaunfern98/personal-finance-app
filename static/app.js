@@ -402,7 +402,8 @@ async function submitCustomCategory(ev) {
     });
     categoryList.push(name);
     customCategorySet.add(name);
-    categoryList.sort((a, b) => a.localeCompare(b));
+    // Ensure categories stay sorted
+    sortCategories();
     fillCategorySelect(el("category"), null);
     fillCategorySelect(el("edit-category"), null);
     populateFilterCategories();
@@ -1983,6 +1984,8 @@ async function loadCategoryList() {
     const data = await api("/api/categories");
     categoryList = data.items;
     customCategorySet = new Set(data.custom || []);
+    // Ensure categories are always sorted
+    sortCategories();
     fillCategorySelect(el("category"), null);
     fillCategorySelect(el("edit-category"), null);
     populateFilterCategories();
@@ -1990,6 +1993,10 @@ async function loadCategoryList() {
     buildBudgetEditorRows();
   } catch (e) {
   }
+}
+
+function sortCategories() {
+  categoryList.sort((a, b) => a.localeCompare(b));
 }
 
 async function loadCategoryMetadata() {
@@ -2206,9 +2213,18 @@ function updateBudgetSummaryFromInputs() {
 async function loadBudgetForm() {
   try {
     const data = await api("/api/budget");
+    const tbody = el("budget-editor-body");
+    if (!tbody) return;
+    
+    // Only update values if they actually changed to prevent flickering
     for (const c of categoryList) {
-      const inp = el("budget-editor-body").querySelector(`.budget-amt[data-cat="${CSS.escape(c)}"]`);
-      if (inp) inp.value = String(data.allocations[c] ?? 0);
+      const inp = tbody.querySelector(`.budget-amt[data-cat="${CSS.escape(c)}"]`);
+      if (inp) {
+        const newValue = String(data.allocations[c] ?? 0);
+        if (inp.value !== newValue) {
+          inp.value = newValue;
+        }
+      }
     }
     syncBudgetPercents();
     applyBudgetSummaryFromApi(data);
@@ -2277,6 +2293,7 @@ async function reloadMonth() {
   }
 }
 
+let budgetLoadTimeout;
 function setTab(name) {
   const panels = ["expenses", "dashboard", "investing", "savings", "budget"];
   panels.forEach((panel) => {
@@ -2289,6 +2306,14 @@ function setTab(name) {
     btn.classList.toggle("active", on);
     btn.setAttribute("aria-selected", on ? "true" : "false");
   });
+  
+  // Load budget form when switching to budget tab (with debouncing)
+  if (name === "budget") {
+    clearTimeout(budgetLoadTimeout);
+    budgetLoadTimeout = setTimeout(loadBudgetForm, 100);
+  } else {
+    clearTimeout(budgetLoadTimeout);
+  }
 }
 
 async function init() {
