@@ -53,6 +53,8 @@ let creditCards = [];
 let dashboardMonth = ymFromDate(new Date());
 let chartSpendingTrend;
 let chartCategoryDonut;
+let chartCashbackTrend;
+let chartSpendVsCashback;
 let debts = [];
 let goals = [];
 let recurringExpenses = [];
@@ -172,6 +174,17 @@ function ensureLegacyOption(selectEl, value) {
   selectEl.value = value;
 }
 
+function calcCashbackTotal(items) {
+  return items.reduce((sum, t) => {
+    if (t.payment_method === "credit" && t.credit_card && cashbackMap[t.credit_card]) {
+      const rates = cashbackMap[t.credit_card];
+      const rate = rates[t.category] ?? rates["__default__"] ?? 0;
+      return sum + t.amount * rate / 100;
+    }
+    return sum;
+  }, 0);
+}
+
 function renderSummary(items, budgetTotals) {
   let total = 0;
   let fixed = 0;
@@ -181,6 +194,7 @@ function renderSummary(items, budgetTotals) {
     if (t.cost_type === "fixed") fixed += t.amount;
     else variable += t.amount;
   }
+  const cashback = calcCashbackTotal(items);
   const bRem = budgetTotals && typeof budgetTotals.remaining === "number";
   const remClass =
     bRem && budgetTotals.remaining < 0 ? " pill--alert" : bRem ? " pill--cool" : "";
@@ -189,11 +203,15 @@ function renderSummary(items, budgetTotals) {
         budgetTotals.remaining
       )}</strong></div>`
     : "";
+  const cashbackPill = cashback > 0
+    ? `<div class="pill"><span class="muted">💳 Cashback</span><strong style="color:var(--success);">${money.format(cashback)}</strong></div>`
+    : "";
   el("summary").innerHTML = `
     <div class="pill"><span class="muted">Month spend</span><strong>${money.format(total)}</strong></div>
     <div class="pill"><span class="muted">Fixed</span><strong>${money.format(fixed)}</strong></div>
     <div class="pill"><span class="muted">Variable</span><strong>${money.format(variable)}</strong></div>
     <div class="pill"><span class="muted">Transactions</span><strong>${items.length}</strong></div>
+    ${cashbackPill}
     ${budgetPill}
   `;
 }
@@ -747,7 +765,7 @@ async function loadDashboardData() {
     const budget = budgetData.allocations || {};
     
     renderDashboardSnapshot(txs);
-    await renderSpendingTrendChart();
+    await renderMonthlyCharts();
     await renderCategoryDonutChart(txs);
     renderBudgetHealthBars(txs, budget);
     renderTopCategories(txs);
@@ -760,87 +778,172 @@ function renderDashboardSnapshot(txs) {
   const monthlyIncome = readSalaryInput();
   const monthlyExpenses = txs.reduce((sum, tx) => sum + tx.amount, 0);
   const netSavings = monthlyIncome - monthlyExpenses;
-  
+  const cashback = calcCashbackTotal(txs);
+
   el("dash-income").textContent = money.format(monthlyIncome);
   el("dash-expenses").textContent = money.format(monthlyExpenses);
   el("dash-savings").textContent = money.format(netSavings);
   el("dash-savings").classList.toggle("text-neg", netSavings < 0);
+  const dashCb = el("dash-cashback");
+  if (dashCb) dashCb.textContent = cashback > 0 ? money.format(cashback) : "—";
 }
 
-async function renderSpendingTrendChart() {
-  const ctx = el("chart-spending-trend");
-  if (!ctx) return;
-  
-  const months = [];
+const CHART_TOOLTIP_OPTS = {
+  backgroundColor: "rgba(10,10,15,0.95)",
+  titleColor: "#e2e8f0",
+  bodyColor: "#94a3b8",
+  borderColor: "rgba(124,58,237,0.3)",
+  borderWidth: 1,
+};
+const CHART_SCALE_OPTS = {
+  grid: { color: "rgba(124,58,237,0.1)" },
+  ticks: { color: "#94a3b8" },
+};
+
+async function renderMonthlyCharts() {
+  if (typeof Chart === "undefined") return;
+  const labels = [];
   const spending = [];
-  
+  const cashbacks = [];
+
   for (let i = 5; i >= 0; i--) {
     const d = new Date();
     d.setMonth(d.getMonth() - i);
     const monthStr = ymFromDate(d);
-    months.push(d.toLocaleDateString("en-US", { month: "short" }));
-    
+    labels.push(d.toLocaleDateString("en-US", { month: "short", year: "2-digit" }));
     try {
-      const q = `?month=${encodeURIComponent(monthStr)}`;
-      const data = await api(`/api/transactions${q}`);
-      const total = (data.items || []).reduce((sum, tx) => sum + tx.amount, 0);
-      spending.push(total);
+      const data = await api(`/api/transactions?month=${encodeURIComponent(monthStr)}`);
+      const txs = data.items || [];
+      spending.push(parseFloat(txs.reduce((s, t) => s + t.amount, 0).toFixed(2)));
+      cashbacks.push(parseFloat(calcCashbackTotal(txs).toFixed(2)));
     } catch (e) {
-      spending.push(0);
+      spending.push(0); cashbacks.push(0);
     }
   }
-  
-  if (chartSpendingTrend) {
-    chartSpendingTrend.destroy();
+
+  // ── Spending Trend (line) ──────────────────────────────────────────────
+  const ctx1 = el("chart-spending-trend");
+  if (ctx1) {
+    if (chartSpendingTrend) chartSpendingTrend.destroy();
+    chartSpendingTrend = new Chart(ctx1, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [{
+          label: "Spending",
+          data: spending,
+          borderColor: "#6366f1",
+          backgroundColor: "rgba(99,102,241,0.18)",
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: "#818cf8",
+          pointBorderColor: "#fff",
+          pointBorderWidth: 2,
+          pointRadius: 4,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { ...CHART_TOOLTIP_OPTS, callbacks: { label: (c) => money.format(c.raw) } } },
+        scales: {
+          x: { ...CHART_SCALE_OPTS },
+          y: { ...CHART_SCALE_OPTS, ticks: { color: "#94a3b8", callback: (v) => money.format(v) } },
+        },
+      },
+    });
   }
-  
-  chartSpendingTrend = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: months,
-      datasets: [{
-        label: "Spending",
-        data: spending,
-        borderColor: "#7c3aed",
-        backgroundColor: "rgba(124, 58, 237, 0.2)",
-        fill: true,
-        tension: 0.4,
-        pointBackgroundColor: "#7c3aed",
-        pointBorderColor: "#fff",
-        pointBorderWidth: 2,
-      }],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: "rgba(10, 10, 15, 0.95)",
-          titleColor: "#e2e8f0",
-          bodyColor: "#94a3b8",
-          borderColor: "rgba(124, 58, 237, 0.3)",
+
+  // ── Cashback Trend (bar) ───────────────────────────────────────────────
+  const ctx2 = el("chart-cashback-trend");
+  if (ctx2) {
+    if (chartCashbackTrend) chartCashbackTrend.destroy();
+    chartCashbackTrend = new Chart(ctx2, {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [{
+          label: "Cashback Earned",
+          data: cashbacks,
+          backgroundColor: "rgba(16,185,129,0.7)",
+          borderColor: "#10b981",
           borderWidth: 1,
-          callbacks: {
-            label: (ctx) => money.format(ctx.raw),
+          borderRadius: 4,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { ...CHART_TOOLTIP_OPTS, callbacks: { label: (c) => money.format(c.raw) } } },
+        scales: {
+          x: { ...CHART_SCALE_OPTS },
+          y: { ...CHART_SCALE_OPTS, ticks: { color: "#94a3b8", callback: (v) => money.format(v) }, beginAtZero: true },
+        },
+      },
+    });
+  }
+
+  // ── Spend vs Cashback (bar + line, dual axis) ──────────────────────────
+  const ctx3 = el("chart-spend-vs-cashback");
+  if (ctx3) {
+    if (chartSpendVsCashback) chartSpendVsCashback.destroy();
+    chartSpendVsCashback = new Chart(ctx3, {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [
+          {
+            label: "Spending",
+            data: spending,
+            backgroundColor: "rgba(99,102,241,0.6)",
+            borderColor: "#6366f1",
+            borderWidth: 1,
+            borderRadius: 4,
+            yAxisID: "ySpend",
+          },
+          {
+            label: "Cashback",
+            data: cashbacks,
+            type: "line",
+            borderColor: "#10b981",
+            backgroundColor: "rgba(16,185,129,0.15)",
+            fill: false,
+            tension: 0.4,
+            pointBackgroundColor: "#10b981",
+            pointBorderColor: "#fff",
+            pointBorderWidth: 2,
+            pointRadius: 5,
+            yAxisID: "yCashback",
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: { labels: { color: "#94a3b8", boxWidth: 12 } },
+          tooltip: { ...CHART_TOOLTIP_OPTS, callbacks: { label: (c) => `${c.dataset.label}: ${money.format(c.raw)}` } },
+        },
+        scales: {
+          x: { ...CHART_SCALE_OPTS },
+          ySpend: {
+            ...CHART_SCALE_OPTS,
+            position: "left",
+            ticks: { color: "#94a3b8", callback: (v) => money.format(v) },
+            title: { display: true, text: "Spending", color: "#6366f1" },
+          },
+          yCashback: {
+            ...CHART_SCALE_OPTS,
+            position: "right",
+            grid: { drawOnChartArea: false },
+            ticks: { color: "#10b981", callback: (v) => money.format(v) },
+            title: { display: true, text: "Cashback", color: "#10b981" },
           },
         },
       },
-      scales: {
-        x: {
-          grid: { color: "rgba(124, 58, 237, 0.1)" },
-          ticks: { color: "#94a3b8" },
-        },
-        y: {
-          grid: { color: "rgba(124, 58, 237, 0.1)" },
-          ticks: { 
-            color: "#94a3b8",
-            callback: (val) => money.format(val),
-          },
-        },
-      },
-    },
-  });
+    });
+  }
 }
 
 async function renderCategoryDonutChart(txs) {

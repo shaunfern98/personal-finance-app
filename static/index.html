@@ -197,7 +197,7 @@
               <h2>Transactions</h2>
               <p class="muted">Edit or delete any row. Over-budget categories are highlighted.</p>
             </div>
-            <div class="form-row" style="margin-bottom: 1rem;">
+            <div class="form-row form-row--inline" style="margin-bottom: 1rem;">
               <input type="text" id="search-tx" placeholder="Search transactions..." style="flex: 1;" />
               <select id="filter-category" style="max-width: 200px;">
                 <option value="">All Categories</option>
@@ -246,7 +246,7 @@
             <h2>Net Worth Snapshot</h2>
             <p class="muted">Your financial health at a glance.</p>
           </div>
-          <div class="budget-strip">
+          <div class="budget-strip" style="grid-template-columns: repeat(auto-fit, minmax(140px,1fr));">
             <div class="budget-strip-item">
               <span class="budget-strip-label">Monthly Income</span>
               <strong class="budget-strip-value mono" id="dash-income">—</strong>
@@ -258,6 +258,10 @@
             <div class="budget-strip-item budget-strip-item--highlight">
               <span class="budget-strip-label">Net Savings</span>
               <strong class="budget-strip-value mono" id="dash-savings">—</strong>
+            </div>
+            <div class="budget-strip-item">
+              <span class="budget-strip-label">💳 Cashback Earned</span>
+              <strong class="budget-strip-value mono" id="dash-cashback" style="color:var(--success);">—</strong>
             </div>
           </div>
         </section>
@@ -277,6 +281,23 @@
               <p class="muted">This month by category</p>
             </div>
             <div class="chart-box"><canvas id="chart-category-donut"></canvas></div>
+          </section>
+        </div>
+
+        <div class="grid grid-2" style="margin-top:1.1rem;">
+          <section class="card card--glow">
+            <div class="card-head">
+              <h2>💳 Cashback Earned</h2>
+              <p class="muted">Monthly cashback over last 6 months</p>
+            </div>
+            <div class="chart-box"><canvas id="chart-cashback-trend"></canvas></div>
+          </section>
+          <section class="card card--glow">
+            <div class="card-head">
+              <h2>📊 Spend vs Cashback</h2>
+              <p class="muted">Spending (bars) and cashback (line) per month</p>
+            </div>
+            <div class="chart-box"><canvas id="chart-spend-vs-cashback"></canvas></div>
           </section>
         </div>
 

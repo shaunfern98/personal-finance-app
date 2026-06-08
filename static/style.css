@@ -340,7 +340,7 @@ body {
 }
 
 .btn-sm {
-  padding: 0.3rem 0.75rem !important;
+  padding: 0.35rem 0.65rem !important;
   font-size: 0.8rem !important;
 }
 
@@ -357,21 +357,27 @@ body {
   background: var(--surface-solid);
   color: var(--ink);
   border-radius: var(--radius-sm);
-  padding: 0.45rem 0.6rem;
+  padding: 0.55rem 0.6rem;
   font: inherit;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
 .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
   border: 1px solid var(--stroke);
   background: var(--surface-solid);
   color: var(--ink);
   border-radius: var(--radius-sm);
-  padding: 0.45rem 0.75rem;
+  padding: 0.55rem 0.85rem;
   font: inherit;
+  line-height: 1;
   font-weight: 700;
   cursor: pointer;
+  white-space: nowrap;
   transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
 }
 
@@ -649,6 +655,13 @@ body {
   gap: 0.7rem;
 }
 
+.form-row--inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 @media (min-width: 640px) {
   .form-row.cols-2 {
     grid-template-columns: 1fr 1fr;
@@ -710,6 +723,13 @@ td {
   padding: 0.55rem 0.7rem;
   text-align: left;
   border-bottom: 1px solid rgba(124, 58, 237, 0.15);
+}
+
+.row-actions {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+  white-space: nowrap;
 }
 
 th {
