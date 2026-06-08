@@ -1672,6 +1672,14 @@ def index() -> Response:
     return send_from_directory(app.static_folder, "index.html")
 
 
+@app.get("/<path:filename>")
+def static_files(filename):
+    # Only serve static files, not API routes
+    if filename.startswith("api/"):
+        return jsonify({"error": "not found"}), 404
+    return send_from_directory(app.static_folder, filename)
+
+
 def _days_in_month(y: int, m: int) -> int:
     if m == 12:
         nxt = date(y + 1, 1, 1)
