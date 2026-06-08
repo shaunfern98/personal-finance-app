@@ -30,27 +30,27 @@
 
 /* ─── Rose Noir ─── deep, romantic, eye-friendly */
 [data-theme="pink"] {
-  --bg: #0e090c;
-  --surface: #1a0f15;
-  --surface-solid: #251520;
-  --stroke: #3a1e2c;
-  --ink: #ecdce4;
-  --muted: #9a7585;
-  --accent: #a84d72;
-  --accent-soft: #c4708e;
-  --accent-dim: rgba(168, 77, 114, 0.15);
-  --secondary: #7a3858;
-  --secondary-soft: #a04d72;
-  --secondary-dim: rgba(122, 56, 88, 0.15);
-  --success: #5a8f6a;
-  --success-dim: rgba(90, 143, 106, 0.15);
-  --warning: #a87838;
-  --warning-dim: rgba(168, 120, 56, 0.15);
-  --danger: #b84040;
-  --danger-dim: rgba(184, 64, 64, 0.15);
-  --grad-1: rgba(168, 77, 114, 0.12);
-  --grad-2: rgba(122, 56, 88, 0.08);
-  --grad-3: rgba(196, 112, 142, 0.06);
+  --bg: #0a0709;
+  --surface: #110c0f;
+  --surface-solid: #1a1417;
+  --stroke: #2d1f26;
+  --ink: #c4b0b8;
+  --muted: #7a5f6a;
+  --accent: #8a4a62;
+  --accent-soft: #a6687f;
+  --accent-dim: rgba(138, 74, 98, 0.12);
+  --secondary: #6b3a50;
+  --secondary-soft: #8a5268;
+  --secondary-dim: rgba(107, 58, 80, 0.12);
+  --success: #4e7a5d;
+  --success-dim: rgba(78, 122, 93, 0.12);
+  --warning: #8a6a3a;
+  --warning-dim: rgba(138, 106, 58, 0.12);
+  --danger: #9a3a3a;
+  --danger-dim: rgba(154, 58, 58, 0.12);
+  --grad-1: rgba(138, 74, 98, 0.08);
+  --grad-2: rgba(107, 58, 80, 0.06);
+  --grad-3: rgba(166, 104, 127, 0.04);
 }
 
 /* ─── Obsidian ─── pure contrast, minimal */

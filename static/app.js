@@ -55,6 +55,7 @@ let chartSpendingTrend;
 let chartCategoryDonut;
 let chartCashbackTrend;
 let chartSpendVsCashback;
+let budgetValuesCache = {};
 let debts = [];
 let goals = [];
 let recurringExpenses = [];
@@ -2066,7 +2067,8 @@ function buildBudgetEditorRows() {
     inp.max = "999999999";
     inp.step = "0.01";
     inp.dataset.cat = c;
-    inp.value = "0";
+    // Use cached value if available, otherwise default to 0
+    inp.value = budgetValuesCache[c] !== undefined ? budgetValuesCache[c] : "0";
     inp.setAttribute("aria-label", `Budget for ${c}`);
     tdAmt.appendChild(inp);
     const tdPct = document.createElement("td");
@@ -2092,7 +2094,12 @@ function buildBudgetEditorRows() {
   if (!tbody.dataset.boundInput) {
     tbody.dataset.boundInput = "1";
     tbody.addEventListener("input", (ev) => {
-      if (ev.target.classList.contains("budget-amt")) syncBudgetPercents();
+      if (ev.target.classList.contains("budget-amt")) {
+        // Cache the value immediately
+        const cat = ev.target.dataset.cat;
+        if (cat) budgetValuesCache[cat] = ev.target.value;
+        syncBudgetPercents();
+      }
       if (ev.target.classList.contains("category-type-select")) {
         const category = ev.target.dataset.cat;
         const newType = ev.target.value;
@@ -2216,14 +2223,20 @@ async function loadBudgetForm() {
     const tbody = el("budget-editor-body");
     if (!tbody) return;
     
-    // Only update values if they actually changed to prevent flickering
+    // Populate cache from server data on first load
+    for (const c of categoryList) {
+      const serverValue = String(data.allocations[c] ?? 0);
+      // Only update cache if we don't have a local value (first load)
+      if (budgetValuesCache[c] === undefined) {
+        budgetValuesCache[c] = serverValue;
+      }
+    }
+    
+    // Apply cached values to inputs
     for (const c of categoryList) {
       const inp = tbody.querySelector(`.budget-amt[data-cat="${CSS.escape(c)}"]`);
-      if (inp) {
-        const newValue = String(data.allocations[c] ?? 0);
-        if (inp.value !== newValue) {
-          inp.value = newValue;
-        }
+      if (inp && budgetValuesCache[c] !== undefined) {
+        inp.value = budgetValuesCache[c];
       }
     }
     syncBudgetPercents();
@@ -2236,8 +2249,10 @@ async function saveBudget() {
   const salary = readSalaryInput();
   const allocations = {};
   for (const c of categoryList) {
-    const inp = el("budget-editor-body").querySelector(`.budget-amt[data-cat="${CSS.escape(c)}"]`);
-    const raw = inp ? parseFloat(inp.value) : 0;
+    // Use cache first, then fall back to input value
+    const raw = budgetValuesCache[c] !== undefined 
+      ? parseFloat(budgetValuesCache[c]) 
+      : 0;
     allocations[c] = Number.isFinite(raw) && raw >= 0 ? raw : 0;
   }
   const res = await api("/api/budget", {
