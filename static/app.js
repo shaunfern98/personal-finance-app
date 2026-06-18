@@ -2467,10 +2467,17 @@ document.addEventListener("DOMContentLoaded", () => {
   const bookmarkToggle = el("bookmark-toggle");
   const mainTabs = el("main-tabs");
   if (bookmarkToggle && mainTabs) {
+    let bookmarkCloseTimer;
     bookmarkToggle.addEventListener("click", () => {
-      const nextOpen = mainTabs.hidden;
-      mainTabs.hidden = !nextOpen;
-      document.body.classList.toggle("bookmark-nav-open", nextOpen);
+      const nextOpen = mainTabs.hidden || !document.body.classList.contains("bookmark-nav-open");
+      clearTimeout(bookmarkCloseTimer);
+      if (nextOpen) {
+        mainTabs.hidden = false;
+        requestAnimationFrame(() => document.body.classList.add("bookmark-nav-open"));
+      } else {
+        document.body.classList.remove("bookmark-nav-open");
+        bookmarkCloseTimer = setTimeout(() => { mainTabs.hidden = true; }, 170);
+      }
       bookmarkToggle.setAttribute("aria-expanded", nextOpen ? "true" : "false");
       bookmarkToggle.classList.toggle("active", nextOpen);
     });
@@ -2488,8 +2495,8 @@ document.addEventListener("DOMContentLoaded", () => {
     btn.addEventListener("click", () => {
       const tab = btn.getAttribute("data-tab");
       if (mainTabs && bookmarkToggle) {
-        mainTabs.hidden = true;
         document.body.classList.remove("bookmark-nav-open");
+        setTimeout(() => { mainTabs.hidden = true; }, 170);
         bookmarkToggle.setAttribute("aria-expanded", "false");
         bookmarkToggle.classList.remove("active");
       }
