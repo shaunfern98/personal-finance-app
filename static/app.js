@@ -824,6 +824,65 @@ const CHART_SCALE_OPTS = {
   ticks: { color: "#94a3b8" },
 };
 
+const dailyValueLabelPlugin = {
+  id: "dailyValueLabel",
+  afterDatasetsDraw(chart) {
+    const { ctx, chartArea } = chart;
+    const meta = chart.getDatasetMeta(0);
+    ctx.save();
+    ctx.font = "700 11px Inter, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "bottom";
+    meta.data.forEach((point, index) => {
+      const value = Number(chart.data.datasets[0].data[index] || 0);
+      if (value <= 0) return;
+      const label = money.format(value);
+      const x = point.x;
+      const y = Math.max(chartArea.top + 12, point.y - 8);
+      ctx.fillStyle = "rgba(17,17,24,0.72)";
+      const width = ctx.measureText(label).width + 10;
+      ctx.fillRect(x - width / 2, y - 14, width, 16);
+      ctx.fillStyle = "#f8fafc";
+      ctx.fillText(label, x, y);
+    });
+    ctx.restore();
+  },
+};
+
+const horizontalBarValueLabelPlugin = {
+  id: "horizontalBarValueLabel",
+  afterDatasetsDraw(chart) {
+    const { ctx, chartArea } = chart;
+    const visibleDatasets = chart.data.datasets || [];
+    ctx.save();
+    ctx.font = "800 11px Inter, sans-serif";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#e2e8f0";
+    if (visibleDatasets.length === 1) {
+      const meta = chart.getDatasetMeta(0);
+      meta.data.forEach((bar, index) => {
+        const value = Number(visibleDatasets[0].data[index] || 0);
+        if (value <= 0) return;
+        ctx.textAlign = "left";
+        ctx.fillText(money.format(value), Math.min(bar.x + 8, chartArea.right - 58), bar.y);
+      });
+    } else {
+      chart.data.labels.forEach((_, index) => {
+        const total = visibleDatasets.reduce((sum, dataset) => sum + Number(dataset.data[index] || 0), 0);
+        if (total <= 0) return;
+        const scale = chart.scales.x;
+        const x = scale.getPixelForValue(total);
+        const meta = chart.getDatasetMeta(0);
+        const y = meta.data[index]?.y;
+        if (!Number.isFinite(y)) return;
+        ctx.textAlign = "left";
+        ctx.fillText(money.format(total), Math.min(x + 8, chartArea.right - 58), y);
+      });
+    }
+    ctx.restore();
+  },
+};
+
 async function renderMonthlyCharts() {
   if (typeof Chart === "undefined") return;
   const labels = [];
@@ -1819,6 +1878,7 @@ function buildOrUpdateDailyChart(series) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      layout: { padding: { top: 26, right: 12 } },
       plugins: {
         legend: { display: false },
         tooltip: {
@@ -1839,6 +1899,7 @@ function buildOrUpdateDailyChart(series) {
         },
       },
     },
+    plugins: [dailyValueLabelPlugin],
   });
 }
 
@@ -1868,6 +1929,7 @@ function buildSimpleCategoryChart(items) {
       indexAxis: "y",
       responsive: true,
       maintainAspectRatio: false,
+      layout: { padding: { right: 76 } },
       plugins: {
         legend: { display: false },
         tooltip: {
@@ -1888,6 +1950,7 @@ function buildSimpleCategoryChart(items) {
         y: { grid: { display: false } },
       },
     },
+    plugins: [horizontalBarValueLabelPlugin],
   });
 }
 
@@ -1899,8 +1962,12 @@ function stackBarLabel(tx) {
 }
 
 function stackBarColor(i) {
-  const h = (310 + ((i * 37) % 55)) % 360;
-  return `hsla(${h}, 78%, 68%, 0.9)`;
+  const palette = [
+    "#ef4444", "#3b82f6", "#22c55e", "#f59e0b", "#a855f7", "#06b6d4",
+    "#f97316", "#14b8a6", "#e11d48", "#84cc16", "#6366f1", "#ec4899",
+    "#0ea5e9", "#eab308", "#10b981", "#8b5cf6", "#dc2626", "#0891b2"
+  ];
+  return palette[i % palette.length];
 }
 
 function buildStackedCategoryChart(payload) {
@@ -1927,6 +1994,7 @@ function buildStackedCategoryChart(payload) {
       indexAxis: "y",
       responsive: true,
       maintainAspectRatio: false,
+      layout: { padding: { right: 76 } },
       plugins: {
         legend: {
           display: showLegend,
@@ -1965,6 +2033,7 @@ function buildStackedCategoryChart(payload) {
         y: { stacked: true, grid: { display: false } },
       },
     },
+    plugins: [horizontalBarValueLabelPlugin],
   });
 }
 
@@ -2401,6 +2470,7 @@ document.addEventListener("DOMContentLoaded", () => {
     bookmarkToggle.addEventListener("click", () => {
       const nextOpen = mainTabs.hidden;
       mainTabs.hidden = !nextOpen;
+      document.body.classList.toggle("bookmark-nav-open", nextOpen);
       bookmarkToggle.setAttribute("aria-expanded", nextOpen ? "true" : "false");
       bookmarkToggle.classList.toggle("active", nextOpen);
     });
@@ -2417,6 +2487,12 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".tab").forEach((btn) => {
     btn.addEventListener("click", () => {
       const tab = btn.getAttribute("data-tab");
+      if (mainTabs && bookmarkToggle) {
+        mainTabs.hidden = true;
+        document.body.classList.remove("bookmark-nav-open");
+        bookmarkToggle.setAttribute("aria-expanded", "false");
+        bookmarkToggle.classList.remove("active");
+      }
       setTab(tab);
       if (tab === "budget") {
         loadIncomeStreams().catch(() => {});
