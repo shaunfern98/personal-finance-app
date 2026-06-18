@@ -705,7 +705,7 @@ def get_cashback_map() -> Response:
             "SELECT category, rate FROM credit_card_cashback WHERE card_id = ? AND user_id = ?",
             (card["id"], uid),
         ).fetchall()
-        card_rates: dict = {"__default__": float(card["default_cashback_rate"] or 1)}
+        card_rates: dict = {"__default__": float(card["default_cashback_rate"] if card["default_cashback_rate"] is not None else 0)}
         for r in rates:
             card_rates[r["category"]] = float(r["rate"])
         result[card["nickname"]] = card_rates
@@ -725,7 +725,7 @@ def get_credit_cards() -> Response:
             "nickname": r["nickname"],
             "card_type": r["card_type"],
             "last_four": r["last_four"],
-            "default_cashback_rate": float(r["default_cashback_rate"] or 1),
+            "default_cashback_rate": float(r["default_cashback_rate"] if r["default_cashback_rate"] is not None else 0),
         }
         for r in rows
     ]
@@ -762,7 +762,7 @@ def create_credit_card() -> Response:
             "nickname": r2["nickname"],
             "card_type": r2["card_type"],
             "last_four": r2["last_four"],
-            "default_cashback_rate": float(r2["default_cashback_rate"] or 1),
+            "default_cashback_rate": float(r2["default_cashback_rate"] if r2["default_cashback_rate"] is not None else 0),
         }
     ), 201
 
@@ -800,7 +800,7 @@ def update_credit_card(card_id: int) -> Response:
             "nickname": r["nickname"],
             "card_type": r["card_type"],
             "last_four": r["last_four"],
-            "default_cashback_rate": float(r["default_cashback_rate"] or 1),
+            "default_cashback_rate": float(r["default_cashback_rate"] if r["default_cashback_rate"] is not None else 0),
         }
     )
 
@@ -819,7 +819,7 @@ def get_card_cashback(card_id: int) -> Response:
         (card_id, uid),
     ).fetchall()
     return jsonify({
-        "default_rate": float(card["default_cashback_rate"] or 1),
+        "default_rate": float(card["default_cashback_rate"] if card["default_cashback_rate"] is not None else 0),
         "rates": [{"category": r["category"], "rate": float(r["rate"])} for r in rates],
     })
 

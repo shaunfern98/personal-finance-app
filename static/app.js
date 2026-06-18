@@ -200,20 +200,18 @@ function renderSummary(items, budgetTotals) {
   const remClass =
     bRem && budgetTotals.remaining < 0 ? " pill--alert" : bRem ? " pill--cool" : "";
   const budgetPill = bRem
-    ? `<div class="pill${remClass}"><span class="muted">Budget left (all categories)</span><strong>${money.format(
+    ? `<div class="pill${remClass}"><span class="muted">Budget left</span><strong>${money.format(
         budgetTotals.remaining
       )}</strong></div>`
-    : "";
-  const cashbackPill = cashback > 0
-    ? `<div class="pill"><span class="muted">💳 Cashback</span><strong style="color:var(--success);">${money.format(cashback)}</strong></div>`
-    : "";
+    : `<div class="pill"><span class="muted">Budget left</span><strong>—</strong></div>`;
+  const cashbackPill = `<div class="pill"><span class="muted">Cash back</span><strong style="color:var(--success);">${money.format(cashback)}</strong></div>`;
   el("summary").innerHTML = `
-    <div class="pill"><span class="muted">Month spend</span><strong>${money.format(total)}</strong></div>
-    <div class="pill"><span class="muted">Fixed</span><strong>${money.format(fixed)}</strong></div>
-    <div class="pill"><span class="muted">Variable</span><strong>${money.format(variable)}</strong></div>
+    <div class="pill"><span class="muted">Month Spend</span><strong>${money.format(total)}</strong></div>
+    ${budgetPill}
     <div class="pill"><span class="muted">Transactions</span><strong>${items.length}</strong></div>
     ${cashbackPill}
-    ${budgetPill}
+    <div class="pill"><span class="muted">Variable spend</span><strong>${money.format(variable)}</strong></div>
+    <div class="pill"><span class="muted">Fixed</span><strong>${money.format(fixed)}</strong></div>
   `;
 }
 
@@ -243,6 +241,7 @@ function renderBudgetStatusTable(data) {
   for (const row of sorted) {
     const tr = document.createElement("tr");
     if (row.over) tr.classList.add("row-over");
+    else if (row.remaining > 0) tr.classList.add("row-positive");
     tr.innerHTML = `
       <td>${escapeHtml(row.category)}</td>
       <td style="font-family:var(--mono)">${money.format(row.budget)}</td>
@@ -650,7 +649,7 @@ function renderCreditCards() {
 
   creditCards.forEach(card => {
     const cardRates = cashbackMap[card.nickname] || {};
-    const defaultRate = cardRates["__default__"] ?? card.default_cashback_rate ?? 1;
+    const defaultRate = cardRates["__default__"] ?? card.default_cashback_rate ?? 0;
     const categoryRates = Object.entries(cardRates).filter(([k]) => k !== "__default__");
 
     const div = document.createElement("div");
@@ -2396,6 +2395,17 @@ document.addEventListener("DOMContentLoaded", () => {
     if (badge && data && data.username) badge.textContent = data.username;
   }).catch(() => {});
 
+  const bookmarkToggle = el("bookmark-toggle");
+  const mainTabs = el("main-tabs");
+  if (bookmarkToggle && mainTabs) {
+    bookmarkToggle.addEventListener("click", () => {
+      const nextOpen = mainTabs.hidden;
+      mainTabs.hidden = !nextOpen;
+      bookmarkToggle.setAttribute("aria-expanded", nextOpen ? "true" : "false");
+      bookmarkToggle.classList.toggle("active", nextOpen);
+    });
+  }
+
   const btnLogout = el("btn-logout");
   if (btnLogout) {
     btnLogout.addEventListener("click", async () => {
@@ -2764,7 +2774,13 @@ document.addEventListener("DOMContentLoaded", () => {
   if (formAdd) {
     formAdd.addEventListener("submit", async (ev) => {
       ev.preventDefault();
-      const selectedCard = el("credit_card_select").value;
+      const retained = {
+        category: el("category").value,
+        payment_method: el("payment_method").value,
+        credit_card: el("credit_card_select").value,
+        cost_type: el("cost_type").value,
+      };
+      const selectedCard = retained.credit_card;
       const payload = {
         amount: Number(el("amount").value),
         date: el("date").value,
@@ -2782,7 +2798,10 @@ document.addEventListener("DOMContentLoaded", () => {
         lastTransactionDate = payload.date;
         el("form-add").reset();
         setMonthInput();
-        fillCategorySelect(el("category"), "Groceries");
+        fillCategorySelect(el("category"), retained.category);
+        el("payment_method").value = retained.payment_method;
+        el("credit_card_select").value = retained.credit_card;
+        el("cost_type").value = retained.cost_type;
         if (lastTransactionDate) {
           el("date").value = lastTransactionDate;
         }

@@ -12,10 +12,10 @@
       href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/style.css?v=6" />
+    <link rel="stylesheet" href="/style.css?v=7" />
     <link rel="manifest" href="/manifest.json" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" defer></script>
-    <script src="/app.js?v=6" defer></script>
+    <script src="/app.js?v=7" defer></script>
   </head>
   <body>
     <div class="bg-noise" aria-hidden="true"></div>
@@ -23,6 +23,7 @@
       <div id="flash" class="flash" role="status"></div>
 
       <header class="top">
+        <button type="button" class="bookmark-toggle" id="bookmark-toggle" aria-expanded="false" aria-controls="main-tabs" title="Show navigation">☰</button>
         <div class="brand">
           <span class="brand-mark" aria-hidden="true"></span>
           <div>
@@ -30,7 +31,7 @@
             <p>Expenses, budgets, and charts — stored only on this device.</p>
           </div>
         </div>
-        <nav class="tabs" role="tablist" aria-label="Main">
+        <nav class="tabs tabs--bookmarks" id="main-tabs" role="tablist" aria-label="Main" hidden>
           <button type="button" class="tab active" role="tab" aria-selected="true" data-tab="expenses">
             Expenses
           </button>
@@ -150,7 +151,7 @@
               <div class="card-head card-head--row">
                 <div>
                   <h2>Budget vs Actual</h2>
-                  <p class="muted">Your monthly budgets. Red = over budget.</p>
+                  <p class="muted">Your monthly budgets. Green = money left, red = over budget.</p>
                 </div>
               </div>
               <div class="budget-total-bar" id="budget-total-bar"></div>
@@ -170,37 +171,6 @@
             </section>
 
             <!-- Dashboard widgets toggle -->
-            <div class="layout-toggles card card--inline" id="dash-toggles">
-              <span class="muted layout-toggles-label">Charts</span>
-              <label><input type="checkbox" data-widget="daily" /> By day</label>
-              <label><input type="checkbox" data-widget="category" /> By category</label>
-              <label><input type="checkbox" data-widget="list" /> Transactions</label>
-            </div>
-
-            <!-- Daily + Category charts -->
-            <section class="card card--glow" id="panel-daily">
-              <div class="card-head">
-                <h2>Spend by Day</h2>
-                <p class="muted">Daily totals for the month.</p>
-              </div>
-              <div class="chart-box"><canvas id="chart-daily"></canvas></div>
-            </section>
-
-            <section class="card card--glow" id="panel-category">
-              <div class="card-head card-head--row">
-                <div>
-                  <h2>Spend by Category</h2>
-                  <p class="muted">Totals for this month.</p>
-                </div>
-                <label class="toggle-pill">
-                  <input type="checkbox" id="toggle-category-stack" />
-                  <span>Stack</span>
-                </label>
-              </div>
-              <div class="chart-box"><canvas id="chart-category"></canvas></div>
-            </section>
-
-            <!-- Transactions list -->
             <section class="card" id="panel-list">
               <div class="tx-list-header">
                 <div class="tx-list-title-row">
@@ -239,6 +209,35 @@
                   <tbody id="tx-body"></tbody>
                 </table>
               </div>
+            </section>
+
+            <div class="layout-toggles card card--inline" id="dash-toggles">
+              <span class="muted layout-toggles-label">Charts</span>
+              <label><input type="checkbox" data-widget="daily" /> By day</label>
+              <label><input type="checkbox" data-widget="category" /> By category</label>
+              <label><input type="checkbox" data-widget="list" /> Transactions</label>
+            </div>
+
+            <section class="card card--glow" id="panel-daily">
+              <div class="card-head">
+                <h2>Spend by Day</h2>
+                <p class="muted">Daily totals for the month.</p>
+              </div>
+              <div class="chart-box"><canvas id="chart-daily"></canvas></div>
+            </section>
+
+            <section class="card card--glow" id="panel-category">
+              <div class="card-head card-head--row">
+                <div>
+                  <h2>Spend by Category</h2>
+                  <p class="muted">Totals for this month.</p>
+                </div>
+                <label class="toggle-pill">
+                  <input type="checkbox" id="toggle-category-stack" />
+                  <span>Stack</span>
+                </label>
+              </div>
+              <div class="chart-box"><canvas id="chart-category"></canvas></div>
             </section>
 
           </div><!-- /expenses-main -->
@@ -483,8 +482,8 @@
               <select id="theme-selector" style="width: 100%; padding: 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--stroke); background: var(--surface-solid); color: var(--text);">
                 <option value="default">Default — Midnight Blue</option>
                 <option value="dark">Nebula — Deep Space Violet</option>
-                <option value="pink">Sakura — Elegant Dark Rose ✨</option>
-                <option value="velvet">Velvet Rose — Deep Luxurious Mauve ✨</option>
+                <option value="pink">Blush Cloud — Soft Pink Aesthetic ✨</option>
+                <option value="velvet">Rose Glass — Elegant Pink Minimal ✨</option>
                 <option value="ocean">Deep Sea — Navy Teal</option>
                 <option value="ember">Ember — Warm Amber</option>
                 <option value="green">Forest — Sage Green</option>
