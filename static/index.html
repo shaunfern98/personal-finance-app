@@ -16,6 +16,7 @@
     <link rel="manifest" href="/manifest.json" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" defer></script>
     <script src="/app.js?v=9" defer></script>
+    <script src="/house.js?v=1" defer></script>
   </head>
   <body>
     <div class="bg-noise" aria-hidden="true"></div>
@@ -42,7 +43,7 @@
             Investing
           </button>
           <button type="button" class="tab" role="tab" aria-selected="false" data-tab="savings">
-            Savings Goals
+            House Fund
           </button>
           <button type="button" class="tab" role="tab" aria-selected="false" data-tab="budget">
             Budget &amp; salary
@@ -372,10 +373,7 @@
       </section>
 
       <section id="panel-savings" class="tab-panel" hidden>
-        <section class="card card--glow" style="text-align: center; padding: 3rem;">
-          <h2 style="font-size: 2rem; margin-bottom: 1rem;">Coming soon...</h2>
-          <p class="muted">Savings goals features will be available after other improvements are completed.</p>
-        </section>
+        <div id="house-root"></div>
       </section>
 
       <section id="panel-budget" class="tab-panel" hidden>
@@ -553,7 +551,7 @@
       <button class="bottom-nav-btn active" data-tab="expenses">💸<span>Expenses</span></button>
       <button class="bottom-nav-btn" data-tab="dashboard">📊<span>Dashboard</span></button>
       <button class="bottom-nav-btn" data-tab="investing">📈<span>Investing</span></button>
-      <button class="bottom-nav-btn" data-tab="savings">🎯<span>Savings</span></button>
+      <button class="bottom-nav-btn" data-tab="savings">🏠<span>House</span></button>
       <button class="bottom-nav-btn" data-tab="budget">⚙️<span>Budget</span></button>
     </nav>
 

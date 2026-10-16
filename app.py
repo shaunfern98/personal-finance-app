@@ -14,20 +14,39 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from categories import CATEGORY_SET, EXPENSE_CATEGORIES
 from db import connect, db_path, init_schema
+import house
 
 app = Flask(__name__, static_folder="static", static_url_path="")
 app.secret_key = os.environ.get("SECRET_KEY") or secrets.token_hex(32)
+app.register_blueprint(house.bp)
 
 INCOME_FREQUENCIES = {"weekly", "bi_weekly", "semi_monthly", "monthly", "annually", "variable"}
 MAX_USERS = int(os.environ.get("MAX_USERS", "2"))
 
+_VIEW_WRITE_OK = {"/api/partner/view", "/api/auth/logout"}
 _AUTH_EXEMPT = {"/api/health", "/api/auth/login", "/api/auth/logout",
                "/api/auth/register", "/api/auth/me", "/login"}
 
 
 @app.before_request
 def _auth_guard():
-    g.uid = current_uid()
+    g.real_uid = session.get("user_id")
+    g.uid = g.real_uid
+    view = session.get("view_uid")
+    if g.real_uid is not None and view and view != g.real_uid:
+        _c = connect()
+        try:
+            house.init_house_schema(_c)
+            linked = house.is_linked(_c, g.real_uid, view)
+        finally:
+            _c.close()
+        if linked:
+            g.uid = view  # every existing route now reads the partner's data
+            if (request.path.startswith("/api/") and request.method not in ("GET", "HEAD", "OPTIONS")
+                    and request.path not in _VIEW_WRITE_OK):
+                return jsonify({"error": "Read-only while viewing your partner. Switch back to your own data to make changes."}), 403
+        else:
+            session.pop("view_uid", None)
     if request.path.startswith("/api/") and request.path not in _AUTH_EXEMPT:
         if g.uid is None:
             return jsonify({"error": "unauthorized"}), 401
@@ -37,6 +56,7 @@ def get_db() -> sqlite3.Connection:
     if "db" not in g:
         g.db = connect()
         init_schema(g.db)
+        house.init_house_schema(g.db)
     return g.db
 
 
@@ -79,7 +99,7 @@ def row_to_tx(r: sqlite3.Row) -> dict[str, Any]:
 
 
 def current_uid() -> int | None:
-    return session.get("user_id")
+    return g.uid if "uid" in g else session.get("user_id")
 
 
 def require_auth() -> Response | None:
@@ -347,7 +367,7 @@ def auth_me() -> Response:
     uid = current_uid()
     if uid is None:
         return jsonify({"error": "unauthorized"}), 401
-    return jsonify({"id": uid, "username": session.get("username", "")})
+    return jsonify({"id": g.real_uid, "username": session.get("username", ""), "viewing_partner": uid != g.real_uid})
 
 
 def _month_range(y: int, m: int) -> tuple[str, str]:
