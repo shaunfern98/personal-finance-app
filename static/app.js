@@ -2368,7 +2368,7 @@ async function reloadMonth() {
 let budgetLoadTimeout;
 let prevTab = "expenses";
 async function setTab(name) {
-  const panels = ["expenses", "dashboard", "investing", "savings", "budget"];
+  const panels = ["overview", "expenses", "reports", "dashboard", "investing", "savings", "budget"];
   panels.forEach((panel) => {
     const node = el(`panel-${panel}`);
     if (!node) return;

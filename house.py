@@ -89,7 +89,7 @@ def _next(m: str) -> str:
     return f"{y + (mo == 12)}-{(mo % 12) + 1:02d}"
 
 
-def _person(db, uid: int, cur: str) -> dict:
+def _person(db, uid: int, cur: str, sel: str = "") -> dict:
     goal = db.execute("SELECT * FROM house_goal WHERE user_id=?", (uid,)).fetchone()
     start = (goal["tracking_start"] if goal else None) or cur
     income = _income(db, uid)
@@ -101,6 +101,9 @@ def _person(db, uid: int, cur: str) -> dict:
         spent.setdefault(r["m"], 0.0)
         if r["category"] not in sav:  # savings-type categories (e.g. Joint Savings) count as saved, not spent
             spent[r["m"]] += r["a"]
+    ms = {"s": 0.0, "v": 0.0}
+    for r in db.execute("SELECT category, SUM(amount) a FROM transactions WHERE user_id=? AND substr(date,1,7)=? GROUP BY category", (uid, sel or cur)):
+        ms["v" if r["category"] in sav else "s"] += r["a"]
     months, m = [], start
     while m < cur:
         if m in spent:
@@ -113,7 +116,8 @@ def _person(db, uid: int, cur: str) -> dict:
         "SELECT COALESCE(SUM(balance),0) FROM savings_accounts WHERE user_id=? AND counts_toward_house=1", (uid,)).fetchone()[0]
     last = months[-3:]
     return {"username": _username(db, uid), "cash": cash, "invested": inv, "total": cash + inv,
-            "avg_monthly": sum(last) / len(last) if last else 0.0, "months_counted": len(months), "income_used": income}
+            "avg_monthly": sum(last) / len(last) if last else 0.0, "months_counted": len(months), "income_used": income,
+            "month_spent": ms["s"], "month_to_savings": ms["v"]}
 
 
 @bp.get("/api/house")
@@ -127,7 +131,7 @@ def house_summary():
         "me": me, "partner_id": pid, "partner_name": _username(db, pid) if pid else None,
         "viewing_partner": g.uid != me,
         "goal": dict(goal) if goal else {"target_amount": 0, "target_date": None, "tracking_start": None, "starting_cash": 0},
-        "people": [dict(_person(db, i, date.today().strftime("%Y-%m")), id=i) for i in ids],
+        "people": [dict(_person(db, i, date.today().strftime("%Y-%m"), (request.args.get("month") or "")[:7]), id=i) for i in ids],
         "accounts": [dict(r) for r in db.execute(f"SELECT * FROM savings_accounts WHERE user_id IN ({q}) ORDER BY id", ids)],
         "deposits": [dict(r) for r in db.execute(
             f"SELECT * FROM savings_deposits WHERE user_id IN ({q}) ORDER BY deposit_date DESC, id DESC LIMIT 20", ids)],

@@ -13,10 +13,14 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/style.css?v=9" />
+    <link rel="stylesheet" href="/redesign.css?v=1" />
+    <link rel="stylesheet" href="/themes.css?v=1" />
     <link rel="manifest" href="/manifest.json" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" defer></script>
     <script src="/app.js?v=9" defer></script>
     <script src="/house.js?v=1" defer></script>
+    <script src="/ui.js?v=2" defer></script>
+    <script src="/more.js?v=1" defer></script>
   </head>
   <body>
     <div class="bg-noise" aria-hidden="true"></div>
@@ -29,15 +33,21 @@
           <span class="brand-mark" aria-hidden="true"></span>
           <div>
             <h1>Our Personal Finances <span class="brand-heart" aria-label="red heart">❤️</span></h1>
-            <p>Expenses, budgets, and charts — stored only on this device.</p>
+            <p>Shared household finances — expenses, budgets, savings and insights.</p>
           </div>
         </div>
         <nav class="tabs tabs--bookmarks" id="main-tabs" role="tablist" aria-label="Main" hidden>
+          <button type="button" class="tab" role="tab" aria-selected="false" data-tab="overview">
+            Overview
+          </button>
           <button type="button" class="tab active" role="tab" aria-selected="true" data-tab="expenses">
             Expenses
           </button>
+          <button type="button" class="tab" role="tab" aria-selected="false" data-tab="reports">
+            Reports
+          </button>
           <button type="button" class="tab" role="tab" aria-selected="false" data-tab="dashboard">
-            Dashboard
+            Charts
           </button>
           <button type="button" class="tab" role="tab" aria-selected="false" data-tab="investing">
             Investing
@@ -46,7 +56,7 @@
             House Fund
           </button>
           <button type="button" class="tab" role="tab" aria-selected="false" data-tab="budget">
-            Budget &amp; salary
+            Plan
           </button>
         </nav>
         <div class="user-bar">
@@ -55,6 +65,14 @@
           <button type="button" class="btn btn-ghost btn-sm" id="btn-logout">Sign out</button>
         </div>
       </header>
+
+      <section id="panel-reports" class="tab-panel" hidden>
+        <div id="reports-root"></div>
+      </section>
+
+      <section id="panel-overview" class="tab-panel" hidden>
+        <div id="overview-root"></div>
+      </section>
 
       <section id="panel-expenses" class="tab-panel">
 
@@ -366,10 +384,7 @@
       </section>
 
       <section id="panel-investing" class="tab-panel" hidden>
-        <section class="card card--glow" style="text-align: center; padding: 3rem;">
-          <h2 style="font-size: 2rem; margin-bottom: 1rem;">Coming soon...</h2>
-          <p class="muted">Investing features will be available after other improvements are completed.</p>
-        </section>
+        <div id="investing-root"></div>
       </section>
 
       <section id="panel-savings" class="tab-panel" hidden>
@@ -548,11 +563,11 @@
     </div>
 
     <nav class="bottom-nav" id="bottom-nav" aria-label="Mobile navigation">
+      <button class="bottom-nav-btn" data-tab="overview">🏡<span>Overview</span></button>
       <button class="bottom-nav-btn active" data-tab="expenses">💸<span>Expenses</span></button>
-      <button class="bottom-nav-btn" data-tab="dashboard">📊<span>Dashboard</span></button>
-      <button class="bottom-nav-btn" data-tab="investing">📈<span>Investing</span></button>
+      <button class="bottom-nav-btn" data-tab="reports">📊<span>Reports</span></button>
       <button class="bottom-nav-btn" data-tab="savings">🏠<span>House</span></button>
-      <button class="bottom-nav-btn" data-tab="budget">⚙️<span>Budget</span></button>
+      <button class="bottom-nav-btn" data-tab="budget">⚙️<span>Plan</span></button>
     </nav>
 
     <dialog id="dlg-edit">
