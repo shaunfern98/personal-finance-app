@@ -106,3 +106,12 @@ h2 { letter-spacing: -.02em; } .tab.active { background: var(--accent); color: v
 #exp-more summary { cursor: pointer; color: var(--muted); font-weight: 600; padding: .3rem 0; } #exp-more .ins-row { margin-top: .6rem; }
 .owner { font-size: .7rem; padding: .1rem .5rem; border-radius: 99px; background: var(--accent-dim); color: var(--ink); margin-left: .4rem; }
 @media (max-width: 800px) { .kpi4 { grid-template-columns: 1fr 1fr; } .qa-bar { grid-template-columns: 1fr; } }
+
+/* ===== v6: modal add form, prominent quick add ===== */
+.expenses-sidebar { display: none !important; }
+#add-dlg { width: min(540px, 94vw); max-height: 92vh; padding: 0; border: 1px solid var(--stroke); border-radius: 22px; background: var(--surface-solid); color: var(--ink); box-shadow: var(--shadow); }
+#add-dlg::backdrop { background: rgba(8, 10, 16, .6); backdrop-filter: blur(3px); }
+#add-dlg .expenses-form-card { margin: 0; border: 0; box-shadow: none; background: transparent; }
+.qa-bar { grid-template-columns: 1fr 200px auto auto; border-color: var(--accent); box-shadow: var(--shadow-glow); }
+.qa-bar input { font-size: 1.05rem; padding: .85rem 1rem; }
+@media (max-width: 800px) { .qa-bar { grid-template-columns: 1fr; } }

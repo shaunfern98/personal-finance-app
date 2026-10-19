@@ -12,13 +12,15 @@
   const tile = (label, value, sub, cls) => `<div class="ins-tile"><span class="muted">${label}</span><strong class="${cls || ""}">${value}</strong><small>${sub || ""}</small></div>`;
 
   // ---- Add-expense drawer ----
-  const drawer = $(".expenses-sidebar"), back = document.createElement("div");
-  back.id = "drawer-backdrop"; document.body.appendChild(back);
-  const open = (on) => { drawer.classList.toggle("open", on); back.classList.toggle("open", on); if (on) setTimeout(() => $("#amount").focus(), 250); };
+  const drawer = $(".expenses-sidebar"), card = $(".expenses-form-card"), dlg = document.createElement("dialog");
+  dlg.id = "add-dlg"; document.body.appendChild(dlg); dlg.appendChild(card); drawer.style.display = "none";
+  card.insertAdjacentHTML("afterbegin", '<button type="button" id="add-close" class="btn btn-ghost btn-sm" style="float:right">✕</button>');
+  $("#add-close").onclick = () => dlg.close(); dlg.addEventListener("click", (e) => { if (e.target === dlg) dlg.close(); });
+  const open = (on) => { if (on && !dlg.open) { dlg.showModal(); setTimeout(() => $("#amount").focus(), 50); } else if (!on && dlg.open) dlg.close(); };
   const btn = document.createElement("button");
   btn.id = "btn-add"; btn.type = "button"; btn.className = "btn btn-primary"; btn.textContent = "＋ Add expense";
   $(".month-nav").appendChild(btn);
-  btn.onclick = () => open(true); back.onclick = () => open(false);
+  btn.onclick = () => open(true);
   document.addEventListener("keydown", (e) => e.key === "Escape" && open(false));
   $("#form-add").addEventListener("submit", () => setTimeout(() => open(false), 500));
 

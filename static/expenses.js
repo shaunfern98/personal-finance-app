@@ -37,12 +37,12 @@
     const seg = P.linked ? `<div class="seg">${["me", "partner", "both"].map((k) => `<button data-who="${k}" class="${who === k ? "on" : ""}">${esc(names[k])}</button>`).join("")}</div>` : "<span></span>";
     const canAdd = who === "me", cats2 = $("#category").innerHTML;
     top.innerHTML = `<div class="who">${seg}<span class="muted">${who === "both" ? "Household total" : who === "partner" ? "Viewing " + esc(names.partner) + " (read-only)" : ""}</span></div>
+      ${canAdd ? `<form id="qa2" class="qa-bar"><input id="qa2-text" placeholder="＋ Quick add — e.g. 12.50 coffee, then Enter" autocomplete="off"><select id="qa2-cat">${cats2}</select><button class="btn btn-primary" type="submit">Add</button><button class="btn btn-ghost" type="button" id="qa2-full">More options</button><small id="qa2-msg">Amount first, then a description. Category is guessed from your words — change it if needed. Press N for the full form.</small></form>`
+        : `<div class="qa-bar" style="grid-template-columns:1fr"><span class="muted">Switch to “Mine” to add expenses.</span></div>`}
       <div class="kpi4">${tile("Income", income > 0 ? money(income) : "—", income > 0 ? "take-home / month" : "set it in Plan")}
         ${tile("Spent", money(spent), toSav > 0 ? "+ " + money(toSav) + " to savings" : items.length + " transactions")}
         ${tile("Saved so far", money(saved), rate === null ? "" : rate + "% of income", saved < 0 ? "neg" : "pos")}
         ${live ? tile("Projected month-end", money(spent / Math.max(el, 1) * dim), "at current pace") : tile("Daily average", money(spent / dim), "over " + dim + " days")}</div>
-      ${canAdd ? `<form id="qa2" class="qa-bar"><input id="qa2-text" placeholder="＋ Quick add — e.g. 12.50 coffee, then Enter" autocomplete="off"><select id="qa2-cat">${cats2}</select><button class="btn btn-primary" type="submit">Add</button><small id="qa2-msg">Amount first, then a description. Category is guessed from your words — change it if needed. Press N for the full form.</small></form>`
-        : `<div class="qa-bar" style="grid-template-columns:1fr"><span class="muted">Switch to “Mine” to add expenses.</span></div>`}
       <details id="exp-more"><summary>More insights</summary><div class="ins-row">
         ${tile("vs last month", d === null ? "—" : (d > 0 ? "+" : "") + d + "%", "same days, " + money(pt), d > 0 ? "neg" : "pos")}${tile("Top category", topc ? esc(topc[0]) : "—", topc ? money(topc[1]) : "")}
         ${tile("Biggest purchase", big ? money(big.amount) : "—", big ? esc(big.purchase || big.category) : "")}${tile("Days with spending", days, "of " + el)}</div>
@@ -67,7 +67,7 @@
   }
   const render = () => { const keep = $("#qa2-text") && $("#qa2-text").value; renderTop(); renderList(); if (keep) $("#qa2-text").value = keep; };
 
-  top.addEventListener("click", (e) => { const b = e.target.closest("button[data-who]"); if (b) { who = b.dataset.who; localStorage.setItem("exp_who", who); load(); } });
+  top.addEventListener("click", (e) => { if (e.target.id === "qa2-full") { $("#btn-add").click(); return; } const b = e.target.closest("button[data-who]"); if (b) { who = b.dataset.who; localStorage.setItem("exp_who", who); load(); } });
   top.addEventListener("input", (e) => { if (e.target.id !== "qa2-text") return; const t = e.target.value.toLowerCase(), sel = $("#qa2-cat"), opts = [...sel.options];
     const hit = opts.find((o) => o.text && t.includes(o.text.toLowerCase())) || (() => { const w = t.replace(/[\d.,$]/g, "").trim().split(/\s+/)[0]; const m = w && items.concat(prev).find((x) => (x.purchase || "").toLowerCase().includes(w)); return m && opts.find((o) => o.value === m.category); })(); if (hit) sel.value = hit.value; });
   top.addEventListener("submit", async (e) => { e.preventDefault(); const txt = $("#qa2-text").value, m = txt.match(/(\d+(?:[.,]\d{1,2})?)/), msg = $("#qa2-msg");
