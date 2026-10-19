@@ -5,12 +5,12 @@
   const ym = (d) => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
   const txs = (m) => api("/api/transactions?month=" + m).then((r) => r.items || []).catch(() => []);
   const total = (a) => a.reduce((t, x) => t + x.amount, 0);
-  const THEMES = [["midnight", "Midnight"], ["aurora", "Aurora"], ["sunset", "Sunset"], ["graphite", "Graphite"], ["sage", "Sage (light)"], ["porcelain", "Porcelain (light)"]];
+  const THEMES = [["mist", "Mist (light)"], ["linen", "Linen (warm light)"], ["dusk", "Dusk (soft dark)"], ["midnight", "Midnight"], ["aurora", "Aurora"], ["sunset", "Sunset"], ["graphite", "Graphite"], ["sage", "Sage (light)"], ["porcelain", "Porcelain (light)"]];
 
   // ---- Themes: new picker options, one-time switch to a new default, header cycle button ----
   const sel = $("#theme-selector");
   if (sel) sel.innerHTML = THEMES.map(([k, n]) => `<option value="${k}">${n}</option>`).join("");
-  if (!localStorage.getItem("theme_v2")) { localStorage.setItem("theme_v2", "1"); setTheme("midnight"); }
+  if (!localStorage.getItem("theme_v3")) { localStorage.setItem("theme_v3", "1"); setTheme("mist"); }
   const cur = () => document.documentElement.getAttribute("data-theme");
   if (sel) sel.value = THEMES.some((t) => t[0] === cur()) ? cur() : "midnight";
   const tb = document.createElement("button");

@@ -252,3 +252,21 @@ def partner_view():
     else:
         session.pop("view_uid", None)
     return jsonify({"ok": True})
+
+
+@bp.get("/api/household/transactions")
+def household_transactions():
+    """Read-only month view for 'me', 'partner' or 'both' (partner data only when mutually linked)."""
+    db, me = _db(), g.real_uid
+    pid = partner_of(db, me)
+    who = request.args.get("who", "me")
+    ids = {"me": [me], "partner": [pid] if pid else [], "both": [me] + ([pid] if pid else [])}.get(who, [me])
+    month = (request.args.get("month") or date.today().strftime("%Y-%m"))[:7]
+    if not ids:
+        return jsonify({"items": []})
+    q = ",".join("?" * len(ids))
+    rows = db.execute(
+        f"SELECT t.*, u.username AS owner FROM transactions t JOIN users u ON u.id = t.user_id "
+        f"WHERE t.user_id IN ({q}) AND substr(t.date,1,7)=? ORDER BY t.date DESC, t.id DESC", ids + [month]).fetchall()
+    keys = ("id", "amount", "date", "category", "cost_type", "purchase", "note", "payment_method", "credit_card")
+    return jsonify({"items": [dict({k: r[k] for k in keys}, is_recurring=bool(r["is_recurring"]), owner=r["owner"], own=r["user_id"] == me) for r in rows]})
