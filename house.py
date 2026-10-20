@@ -1,11 +1,14 @@
 """Partner sharing (read-only) + house fund. Additive: new tables only, existing data untouched."""
 from __future__ import annotations
 
+import base64
+import binascii
 import json
+import re
 import sqlite3
 from datetime import date
 
-from flask import Blueprint, g, jsonify, request, session
+from flask import Blueprint, Response, g, jsonify, request, session
 
 from db import connect, init_schema
 
@@ -31,6 +34,9 @@ def init_house_schema(conn: sqlite3.Connection) -> None:
             id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL,
             kind TEXT NOT NULL CHECK (kind IN ('extra', 'invest')), amount REAL NOT NULL CHECK (amount > 0),
             deposit_date TEXT NOT NULL, note TEXT NOT NULL DEFAULT '');
+        CREATE TABLE IF NOT EXISTS user_photos (
+            user_id INTEGER NOT NULL, kind TEXT NOT NULL, mime TEXT NOT NULL, data BLOB NOT NULL,
+            updated_at TEXT NOT NULL DEFAULT (datetime('now')), PRIMARY KEY (user_id, kind));
         """
     )
 
@@ -270,3 +276,65 @@ def household_transactions():
         f"WHERE t.user_id IN ({q}) AND substr(t.date,1,7)=? ORDER BY t.date DESC, t.id DESC", ids + [month]).fetchall()
     keys = ("id", "amount", "date", "category", "cost_type", "purchase", "note", "payment_method", "credit_card")
     return jsonify({"items": [dict({k: r[k] for k in keys}, is_recurring=bool(r["is_recurring"]), owner=r["owner"], own=r["user_id"] == me) for r in rows]})
+
+
+# ---- profile photos: 'avatar' (one per person) and 'couple' (shared once linked) ----
+def _photo_ver(db, uid, kind):
+    r = db.execute("SELECT updated_at FROM user_photos WHERE user_id=? AND kind=?", (uid, kind)).fetchone()
+    return r[0].replace(" ", "T") if r else None
+
+
+@bp.get("/api/photos")
+def photos_meta():
+    db, me = _db(), g.real_uid
+    pid = partner_of(db, me)
+    out = {"me": {"id": me, "name": _username(db, me), "v": _photo_ver(db, me, "avatar")}, "partner": None,
+           "couple": _photo_ver(db, me, "couple") or (_photo_ver(db, pid, "couple") if pid else None)}
+    if pid:
+        out["partner"] = {"id": pid, "name": _username(db, pid), "v": _photo_ver(db, pid, "avatar")}
+    return jsonify(out)
+
+
+@bp.get("/api/photo/<kind>")
+def photo_get(kind: str):
+    if kind not in ("avatar", "couple"):
+        return "", 404
+    db, me = _db(), g.real_uid
+    pid = partner_of(db, me)
+    uid = request.args.get("uid", type=int) or me
+    if kind == "avatar" and uid not in (me, pid):
+        return "", 404
+    row = db.execute("SELECT mime, data FROM user_photos WHERE user_id=? AND kind=?", (uid if kind == "avatar" else me, kind)).fetchone()
+    if not row and kind == "couple" and pid:
+        row = db.execute("SELECT mime, data FROM user_photos WHERE user_id=? AND kind='couple'", (pid,)).fetchone()
+    if not row:
+        return "", 404
+    return Response(row["data"], mimetype=row["mime"], headers={"Cache-Control": "private, max-age=86400"})
+
+
+@bp.post("/api/photo/<kind>")
+def photo_set(kind: str):
+    if kind not in ("avatar", "couple"):
+        return jsonify({"error": "Unknown photo type"}), 404
+    m = re.match(r"data:(image/(?:jpeg|png|webp));base64,(.+)$", (request.get_json(silent=True) or {}).get("image", ""), re.S)
+    if not m:
+        return jsonify({"error": "Please choose a JPG, PNG or WebP image"}), 400
+    try:
+        raw = base64.b64decode(m.group(2), validate=False)
+    except (binascii.Error, ValueError):
+        return jsonify({"error": "Could not read that image"}), 400
+    if not raw or len(raw) > 600_000:
+        return jsonify({"error": "Image is too large"}), 400
+    db = _db()
+    db.execute("INSERT INTO user_photos (user_id, kind, mime, data) VALUES (?,?,?,?) ON CONFLICT(user_id, kind) DO UPDATE SET "
+               "mime=excluded.mime, data=excluded.data, updated_at=datetime('now')", (g.real_uid, kind, m.group(1), raw))
+    db.commit()
+    return jsonify({"ok": True})
+
+
+@bp.delete("/api/photo/<kind>")
+def photo_delete(kind: str):
+    db = _db()
+    db.execute("DELETE FROM user_photos WHERE user_id=? AND kind=?", (g.real_uid, kind))
+    db.commit()
+    return jsonify({"ok": True})
