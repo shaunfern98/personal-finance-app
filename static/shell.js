@@ -35,4 +35,19 @@
   }
   me.onclick = () => pick("avatar"); cp.onclick = () => pick("couple");
   PIC.ready = PIC.refresh();
+
+  // ---- Mobile: phone-width screens automatically get the mobile layout; the 📱 toggle can still force it on a desktop window ----
+  const mq = matchMedia("(max-width: 900px)");
+  const sync = () => document.body.classList.toggle("mobile-view", mq.matches || localStorage.getItem("mobile-view") === "1");
+  mq.addEventListener("change", sync); sync();
+  // "More" menu in the bottom bar so Charts and Investing stay reachable on mobile
+  const nav = $(".bottom-nav");
+  if (nav) {
+    const more = document.createElement("button"), sheet = document.createElement("div");
+    more.type = "button"; more.className = "bottom-nav-btn"; more.innerHTML = "☰<span>More</span>"; nav.appendChild(more);
+    sheet.className = "more-sheet"; document.body.appendChild(sheet);
+    [["dashboard", "📈 Charts"], ["investing", "💼 Investing"]].forEach(([t, l]) => { const b = document.createElement("button"); b.type = "button"; b.textContent = l;
+      b.onclick = () => { $(`.tab[data-tab="${t}"]`).click(); sheet.classList.remove("open"); }; sheet.appendChild(b); });
+    more.onclick = (e) => { e.stopPropagation(); sheet.classList.toggle("open"); }; document.addEventListener("click", () => sheet.classList.remove("open"));
+  }
 })();
