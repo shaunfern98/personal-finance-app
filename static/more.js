@@ -77,7 +77,7 @@
     charts.forEach((c) => c.destroy()); charts = [];
     if (window.Chart && tot > 0) charts.push(new Chart($("#inv-chart"), { type: "doughnut", data: { labels: Object.keys(by), datasets: [{ data: Object.values(by), borderWidth: 0 }] }, options: { plugins: { legend: { position: "bottom", labels: { color: getComputedStyle(document.body).getPropertyValue("--muted") } } } } }));
   }
-  document.querySelectorAll('[data-tab="investing"]').forEach((b) => b.addEventListener("click", investing));
+  // Investing tab is now rendered by portfolio.js
 
   // ---- Plan tab: jump links so the long page is easy to navigate ----
   const panel = $("#panel-budget"), heads = [...panel.querySelectorAll("section.card h2")].filter((h) => h.textContent.trim().length < 28);

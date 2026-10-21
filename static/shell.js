@@ -1,7 +1,7 @@
 // Sidebar icons + profile/couple photos. Exposes window.PIC for other scripts. Loaded after app.js (uses api()).
 (() => {
   const $ = (s) => document.querySelector(s);
-  const IC = { overview: "🏠", expenses: "🧾", reports: "📊", dashboard: "📈", investing: "💼", savings: "🏡", budget: "⚙️" };
+  const IC = { overview: "🏠", expenses: "🧾", reports: "📊", dashboard: "📈", investing: "💼", savings: "🎯", budget: "⚙️" };
   document.querySelectorAll("#main-tabs .tab").forEach((t) => { t.dataset.ico = IC[t.dataset.tab] || "•"; });
   const S = { me: null, partner: null, couple: null };
   const hue = (s) => [...String(s)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 7);

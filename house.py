@@ -37,6 +37,20 @@ def init_house_schema(conn: sqlite3.Connection) -> None:
         CREATE TABLE IF NOT EXISTS user_photos (
             user_id INTEGER NOT NULL, kind TEXT NOT NULL, mime TEXT NOT NULL, data BLOB NOT NULL,
             updated_at TEXT NOT NULL DEFAULT (datetime('now')), PRIMARY KEY (user_id, kind));
+        CREATE TABLE IF NOT EXISTS goals (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, name TEXT NOT NULL, emoji TEXT NOT NULL DEFAULT '🎯',
+            target_amount REAL NOT NULL DEFAULT 0, target_date TEXT, shared INTEGER NOT NULL DEFAULT 0, completed_at TEXT,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')));
+        CREATE TABLE IF NOT EXISTS goal_contribs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, goal_id INTEGER NOT NULL, user_id INTEGER NOT NULL, amount REAL NOT NULL,
+            contrib_date TEXT NOT NULL, note TEXT NOT NULL DEFAULT '', from_savings INTEGER NOT NULL DEFAULT 1);
+        CREATE TABLE IF NOT EXISTS goal_photos (
+            goal_id INTEGER PRIMARY KEY, mime TEXT NOT NULL, data BLOB NOT NULL, updated_at TEXT NOT NULL DEFAULT (datetime('now')));
+        CREATE TABLE IF NOT EXISTS holdings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, account_id INTEGER NOT NULL, symbol TEXT NOT NULL,
+            shares REAL NOT NULL, avg_cost REAL);
+        CREATE TABLE IF NOT EXISTS quote_cache (
+            symbol TEXT PRIMARY KEY, price REAL NOT NULL, prev REAL, currency TEXT, name TEXT, fetched_at REAL NOT NULL);
         """
     )
 
@@ -95,6 +109,16 @@ def _next(m: str) -> str:
     return f"{y + (mo == 12)}-{(mo % 12) + 1:02d}"
 
 
+def _holdings_value(db, uid: int) -> float:
+    """Value (CAD) of holdings in house-counted accounts, from the last cached prices (refreshed when the Investing tab loads)."""
+    rows = db.execute("SELECT h.symbol, h.shares FROM holdings h JOIN savings_accounts a ON a.id=h.account_id WHERE h.user_id=? AND a.counts_toward_house=1", (uid,)).fetchall()
+    if not rows:
+        return 0.0
+    c = {r["symbol"]: r for r in db.execute(f"SELECT symbol, price, currency FROM quote_cache WHERE symbol IN ({','.join('?' * (len(rows) + 1))})", [r["symbol"] for r in rows] + ["USDCAD=X"])}
+    fx = c["USDCAD=X"]["price"] if "USDCAD=X" in c else 1.0
+    return sum(r["shares"] * c[r["symbol"]]["price"] * (fx if c[r["symbol"]]["currency"] == "USD" else 1.0) for r in rows if r["symbol"] in c)
+
+
 def _person(db, uid: int, cur: str, sel: str = "") -> dict:
     goal = db.execute("SELECT * FROM house_goal WHERE user_id=?", (uid,)).fetchone()
     start = (goal["tracking_start"] if goal else None) or cur
@@ -117,13 +141,15 @@ def _person(db, uid: int, cur: str, sel: str = "") -> dict:
         m = _next(m)
     dep = lambda k: db.execute(
         "SELECT COALESCE(SUM(amount),0) FROM savings_deposits WHERE user_id=? AND kind=?", (uid, k)).fetchone()[0]
-    cash = (goal["starting_cash"] if goal else 0) + sum(months) + dep("extra") - dep("invest")
+    alloc = db.execute("SELECT COALESCE(SUM(c.amount),0) FROM goal_contribs c JOIN goals gl ON gl.id=c.goal_id "
+                       "WHERE c.user_id=? AND c.from_savings=1 AND gl.completed_at IS NULL", (uid,)).fetchone()[0]
+    cash = (goal["starting_cash"] if goal else 0) + sum(months) + dep("extra") - dep("invest") - alloc
     inv = db.execute(
-        "SELECT COALESCE(SUM(balance),0) FROM savings_accounts WHERE user_id=? AND counts_toward_house=1", (uid,)).fetchone()[0]
+        "SELECT COALESCE(SUM(balance),0) FROM savings_accounts WHERE user_id=? AND counts_toward_house=1", (uid,)).fetchone()[0] + _holdings_value(db, uid)
     last = months[-3:]
     return {"username": _username(db, uid), "cash": cash, "invested": inv, "total": cash + inv,
             "avg_monthly": sum(last) / len(last) if last else 0.0, "months_counted": len(months), "income_used": income,
-            "month_spent": ms["s"], "month_to_savings": ms["v"]}
+            "month_spent": ms["s"], "month_to_savings": ms["v"], "goal_alloc": alloc}
 
 
 @bp.get("/api/house")
@@ -192,6 +218,7 @@ def update_account(aid: int):
 @bp.delete("/api/house/accounts/<int:aid>")
 def delete_account(aid: int):
     db = _db()
+    db.execute("DELETE FROM holdings WHERE account_id=? AND user_id=?", (aid, g.uid))
     db.execute("DELETE FROM savings_accounts WHERE id=? AND user_id=?", (aid, g.uid))
     db.commit()
     return jsonify({"ok": True})
