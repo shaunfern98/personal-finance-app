@@ -77,7 +77,7 @@
       <div class="pace ${spentPct > dayPct + 5 ? "over" : ""}"><i style="width:${spentPct}%"></i><b style="left:${dayPct}%"></b></div>
       <small class="muted">${spentPct}% of take-home spent · ${dayPct}% of the month gone${spentPct > dayPct + 5 ? " — spending ahead of pace" : spentPct > 0 ? " — on pace" : ""}</small></div>
       ${ro ? "<div></div>" : `<form id="qa" class="qa"><b>Quick add</b><input id="qa-text" placeholder="e.g. 12.50 coffee" autocomplete="off"><select id="qa-cat">${$("#category").innerHTML}</select><button class="btn btn-primary" type="submit">Add expense</button><small id="qa-msg">Press / anywhere to jump here · N for the full form</small></form>`}</section>`;
-    root.innerHTML = hero + `<div class="ins-row">
+    root.innerHTML = hero + '<div id="cal-slot"></div>' + `<div class="ins-row">
       ${tile("This month so far", money(spend[5]), "projected " + money(proj || 0))}
       ${tile("Avg monthly spend", money(avgSpend), "last " + done.length + " full months")}
       ${income > 0 ? tile("Savings rate (last full month)", Math.round(rates[4]) + "%", "of " + money(income) + " take-home", rates[4] >= 20 ? "down" : "") : tile("Savings rate", "—", "set income in Budget & salary")}

@@ -7,8 +7,8 @@
   const panel = $("#panel-expenses"), old = $("#panel-list"); if (!panel || !old) return;
   old.style.display = "none";
   const top = document.createElement("section"); top.id = "exp-top"; panel.prepend(top);
-  const box = document.createElement("section"); box.id = "tx-new"; box.className = "card"; old.after(box);
-  const viz = document.createElement("section"); viz.id = "exp-viz"; top.after(viz); let chart = null;
+  const box = document.createElement("section"); box.id = "tx-new"; box.className = "card"; top.after(box);
+  const viz = document.createElement("section"); viz.id = "exp-viz"; box.after(viz); let chart = null, ddOpen = false;
   const todayStr = () => new Date().toLocaleDateString("en-CA");
   const E = Object.assign({ pay: "debit", type: "variable", card: "", batch: false, cat: "" }, JSON.parse(localStorage.getItem("qa_state") || "{}")); E.date = todayStr();
   const saveE = () => localStorage.setItem("qa_state", JSON.stringify({ pay: E.pay, type: E.type, card: E.card, batch: E.batch }));
@@ -51,7 +51,7 @@
     P = await api("/api/partner").catch(() => ({}));
     if (!P.linked) who = "me";
     [items, prev, H] = await Promise.all([hx(month), hx(prevM(month)), api("/api/house?month=" + month).catch(() => null)]);
-    render();
+    render(); window.dispatchEvent(new Event("expload"));
   }
   const refresh = async () => { $("#month-input").dispatchEvent(new Event("change")); await load(); };
 
@@ -83,7 +83,9 @@
   }
 
   function renderList() {
-    const cats = [...new Set(items.map((t) => t.category))].sort();
+    const cats = [...new Set(items.map((t) => t.category))].sort(), sums = {}; items.forEach((t) => (sums[t.category] = (sums[t.category] || 0) + t.amount));
+    const dot = (c) => `<i style="background:hsl(${hue(c)} 65% 55%)"></i>`;
+    const catDD = (cs) => `<div class="catdd ${ddOpen ? "open" : ""}"><button type="button" class="catdd-btn" data-dd="1">${cat ? dot(cat) + esc(cat) : "All categories"}<span>▾</span></button><div class="catdd-menu"><button data-c="" class="${cat === "" ? "on" : ""}">All categories</button>${cs.map((c) => `<button data-c="${esc(c)}" class="${cat === c ? "on" : ""}">${dot(c)}${esc(c)}<em>${money2(sums[c])}</em></button>`).join("")}</div></div>`;
     let list = items.filter((t) => (!cat || t.category === cat) && (!pay || t.payment_method === pay) && (!q || (t.purchase + " " + t.category + " " + (t.note || "")).toLowerCase().includes(q)));
     list = list.slice().sort(sort === "big" ? (a, b) => b.amount - a.amount : (a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : b.id - a.id));
     const days = {}; list.forEach((t) => (days[t.date] = days[t.date] || []).push(t));
@@ -92,9 +94,8 @@
       <small>${esc(t.category)} · ${esc(t.payment_method)}${t.credit_card ? " · " + esc(t.credit_card) : ""}${t.is_recurring ? " · 🔁" : ""}${t.note ? " · " + esc(t.note) : ""}</small></div><strong class="tx-amt">${money2(t.amount)}</strong>
       ${t.own && who !== "partner" ? `<span class="tx-act"><button data-e="${t.id}" title="Edit">✏️</button><button data-d="${t.id}" title="Delete">🗑</button></span>` : ""}</div>`;
     box.innerHTML = `<div class="tx-head"><h2>Transactions</h2><span class="muted">${list.length} · ${money2(list.reduce((t, x) => t + x.amount, 0))}</span></div>
-      <div class="tx-bar"><input id="tx-q" placeholder="🔍 Search purchases, notes, categories…" value="${esc(q)}"><div class="seg">${[["", "All"], ["credit", "Credit"], ["debit", "Debit"]].map(([v, l]) => `<button data-p="${v}" class="${pay === v ? "on" : ""}">${l}</button>`).join("")}</div>
+      <div class="tx-bar"><input id="tx-q" placeholder="🔍 Search purchases, notes, categories…" value="${esc(q)}">${catDD(cats)}<div class="seg">${[["", "All"], ["credit", "Credit"], ["debit", "Debit"]].map(([v, l]) => `<button data-p="${v}" class="${pay === v ? "on" : ""}">${l}</button>`).join("")}</div>
       <div class="seg"><button data-s="new" class="${sort === "new" ? "on" : ""}">Newest</button><button data-s="big" class="${sort === "big" ? "on" : ""}">Largest</button></div></div>
-      <div class="chips"><button data-c="" class="${cat === "" ? "on" : ""}">All</button>${cats.map((c) => `<button data-c="${esc(c)}" class="${cat === c ? "on" : ""}"><i style="background:hsl(${hue(c)} 65% 55%)"></i>${esc(c)}</button>`).join("")}</div>
       ${sort === "big" ? `<div class="tx-day">${list.map(row).join("")}</div>` : keys.map((d) => `<div class="tx-day"><div class="tx-dayhead"><span>${dl(d)}</span><span>${money2(days[d].reduce((t, x) => t + x.amount, 0))}</span></div>${days[d].map(row).join("")}</div>`).join("")}
       ${list.length ? "" : '<p class="muted" style="text-align:center;padding:2rem">Nothing here yet — add an expense above.</p>'}`;
   }
@@ -122,7 +123,7 @@
   viz.addEventListener("click", (e) => { const b = e.target.closest(".cat-row"); if (!b) return; cat = cat === b.dataset.c ? "" : b.dataset.c; renderList(); renderViz(); box.scrollIntoView({ behavior: "smooth", block: "start" }); });
   box.addEventListener("input", (e) => { if (e.target.id === "tx-q") { q = e.target.value.toLowerCase(); renderList(); const i = $("#tx-q"); i.focus(); i.setSelectionRange(i.value.length, i.value.length); } });
   box.addEventListener("click", async (e) => { const b = e.target.closest("button"); if (!b) return; const d = b.dataset;
-    if (d.c !== undefined) { cat = d.c; renderList(); } else if (d.p !== undefined) { pay = d.p; renderList(); } else if (d.s) { sort = d.s; renderList(); }
+    if (d.dd) { ddOpen = !ddOpen; renderList(); } else if (d.c !== undefined) { cat = d.c; ddOpen = false; renderList(); } else if (d.p !== undefined) { pay = d.p; renderList(); } else if (d.s) { sort = d.s; renderList(); }
     else if (d.d && confirm("Delete this transaction?")) { await api("/api/transactions/" + d.d, { method: "DELETE" }); refresh(); } else if (d.e) edit(items.find((t) => String(t.id) === d.e)); });
   function edit(t) {
     dlg.innerHTML = `<form method="dialog" class="tx-form"><h3>Edit transaction</h3><label>Amount<input id="e-amt" type="number" step="0.01" value="${t.amount}"></label><label>Purchase<input id="e-pur" value="${esc(t.purchase)}"></label>
@@ -131,6 +132,7 @@
     $("#e-cat").value = t.category; dlg.showModal();
     $("#e-save").onclick = async (ev) => { ev.preventDefault(); try { await api("/api/transactions/" + t.id, { method: "PUT", body: JSON.stringify({ amount: Number($("#e-amt").value), purchase: $("#e-pur").value, date: $("#e-date").value, category: $("#e-cat").value, note: $("#e-note").value }) }); dlg.close(); refresh(); } catch (er) { alert(er.message); } };
   }
+  document.addEventListener("click", (e) => { if (ddOpen && !e.target.closest(".catdd")) { ddOpen = false; renderList(); } });
   let t0; new MutationObserver(() => { clearTimeout(t0); t0 = setTimeout(load, 250); }).observe($("#summary"), { childList: true });
   load();
 })();

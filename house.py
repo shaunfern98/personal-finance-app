@@ -49,6 +49,14 @@ def init_house_schema(conn: sqlite3.Connection) -> None:
         CREATE TABLE IF NOT EXISTS holdings (
             id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, account_id INTEGER NOT NULL, symbol TEXT NOT NULL,
             shares REAL NOT NULL, avg_cost REAL);
+        CREATE TABLE IF NOT EXISTS card_meta (
+            card_id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, statement_day INTEGER, due_day INTEGER, credit_limit REAL, paid_due TEXT);
+        CREATE TABLE IF NOT EXISTS card_photos (
+            card_id INTEGER PRIMARY KEY, mime TEXT NOT NULL, data BLOB NOT NULL, updated_at TEXT NOT NULL DEFAULT (datetime('now')));
+        CREATE TABLE IF NOT EXISTS events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, title TEXT NOT NULL, event_date TEXT NOT NULL,
+            repeat TEXT NOT NULL DEFAULT 'none', remind_days INTEGER NOT NULL DEFAULT 1, note TEXT NOT NULL DEFAULT '', shared INTEGER NOT NULL DEFAULT 0);
+        CREATE TABLE IF NOT EXISTS cal_tokens (user_id INTEGER PRIMARY KEY, token TEXT NOT NULL UNIQUE);
         CREATE TABLE IF NOT EXISTS quote_cache (
             symbol TEXT PRIMARY KEY, price REAL NOT NULL, prev REAL, currency TEXT, name TEXT, fetched_at REAL NOT NULL);
         """

@@ -16,11 +16,13 @@ from categories import CATEGORY_SET, EXPENSE_CATEGORIES
 from db import connect, db_path, init_schema
 import house
 import goals
+import cards
 
 app = Flask(__name__, static_folder="static", static_url_path="")
 app.secret_key = os.environ.get("SECRET_KEY") or secrets.token_hex(32)
 app.register_blueprint(house.bp)
 app.register_blueprint(goals.bp)
+app.register_blueprint(cards.bp)
 
 INCOME_FREQUENCIES = {"weekly", "bi_weekly", "semi_monthly", "monthly", "annually", "variable"}
 MAX_USERS = int(os.environ.get("MAX_USERS", "2"))
